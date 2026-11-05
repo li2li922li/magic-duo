@@ -11,7 +11,7 @@
         .cell { aspect-ratio: 1; background: #1a1a1a; border: 1px solid #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666; cursor: pointer; min-width: 16px; min-height: 16px; }
         .cell:hover { background: #333; } .cell:active { background: #555; }
         
-        #bottom-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; max-width: 600px; margin: 0 auto; }
+        #bottom-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; max-width: 600px; margin: 0 auto; }
         button { background: #2e1e3e; color: #f0f0f0; border: 1px solid #6a4a8a; padding: 10px; border-radius: 6px; font-family: inherit; font-size: 12px; font-weight: bold; cursor: pointer; }
         button:active { background: #5a4a6a; }
 
@@ -30,20 +30,22 @@
         .inv-item { background: #2a2a2a; border: 1px solid #444; padding: 10px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
         .shop-btn { padding: 5px 10px; font-size: 12px; background: #4a6a4a; border: none; }
 
-        /* --- ПЕРСОНАЖ --- */
         .avatar-select { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 15px 0; }
         .avatar-option { font-size: 24px; padding: 10px; background: #2a2a2a; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
         .avatar-option.selected { border-color: #ffcc00; background: #3a3a1a; }
         .xp-bar-container { background: #000; border-radius: 10px; height: 20px; width: 100%; margin: 10px 0; overflow: hidden; position: relative; border: 1px solid #444; }
         .xp-bar-fill { background: #4a8a6a; height: 100%; width: 0%; transition: width 0.3s; }
         .xp-text { position: absolute; width: 100%; text-align: center; top: 2px; font-size: 12px; font-weight: bold; color: #fff; text-shadow: 1px 1px 0 #000; }
+        
+        /* Стили для квестов */
+        .quest-item { background: #2a2a2a; border: 1px solid #444; padding: 10px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
     </style>
 </head>
 <body>
 
     <div id="top-panel">
         <span id="player-name">Загрузка...</span>
-        <span id="player-level">Ур. 1</span>
+        <span id="player-level">Ур. 1/50</span>
         <span id="player-hp">10/10 HP</span>
         <span id="player-tickets">🎫 0</span>
         <span id="player-crystals">💎 0</span>
@@ -51,13 +53,11 @@
 
     <div id="map"></div>
 
-    <!-- Новая нижняя панель -->
     <div id="bottom-panel">
         <button onclick="showInventory()">🎒 Инвентарь</button>
         <button onclick="showCharacter()">🧙‍♂️ Персонаж</button>
         <button onclick="showQuests()">📜 Задания</button>
         <button onclick="showShop()">🛒 Лавка</button>
-        <button onclick="showMenu()" style="grid-column: span 2;">⚔️ В игру</button>
     </div>
 
     <!-- Окно боя -->
@@ -67,10 +67,13 @@
             <div class="monster-stats" id="monster-hp">HP: 10/10</div>
             <div class="monster-desc" id="monster-desc">Описание</div>
             <div class="battle-log" id="battle-log"></div>
+            
+            <!-- Инвентарь в бою -->
+            <div id="battle-inventory" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px; border: 1px solid #444; padding: 5px; border-radius: 5px;">
+                <!-- Заполняется динамически -->
+            </div>
+
             <div class="battle-buttons">
-                <button class="battle-btn" onclick="attackMonster('bow')">🏹 Лук</button>
-                <button class="battle-btn" onclick="useItemInBattle('potion')">🧪 Зелье</button>
-                <button class="battle-btn" onclick="useItemInBattle('food')">🍪 Еда</button>
                 <button class="battle-btn close-btn" onclick="closeBattle(true)">Отступить</button>
             </div>
         </div>
@@ -88,23 +91,19 @@
     <!-- Окно персонажа -->
     <div id="character-modal" class="modal-overlay">
         <div class="modal-content">
-            <h2>Карточка Волшебника</h2>
+            <h2>Карточка персонажа</h2>
             <div style="text-align: center; font-size: 48px;" id="char-avatar">🧙‍♂️</div>
             <h3 id="char-name" style="text-align: center; color: #ffcc00;">Имя</h3>
             
             <p><b>Выберите аватар:</b></p>
-            <div class="avatar-select" id="avatar-list">
-                <!-- Заполняется через JS -->
-            </div>
+            <div class="avatar-select" id="avatar-list"></div>
 
-            <p><b>Уровень: <span id="char-level">1</span></b></p>
+            <p><b>Уровень: <span id="char-level">1</span>/50</b></p>
             <div class="xp-bar-container">
                 <div class="xp-bar-fill" id="xp-bar"></div>
                 <div class="xp-text" id="xp-text">0 / 100 XP</div>
             </div>
-            <p style="font-size: 12px; color: #aaa;">* Нажмите на уровень, чтобы увидеть таблицу</p>
 
-            <button onclick="showLevelTable()" style="width: 100%; margin-top: 5px; background: #4a6a8a;">Посмотреть таблицу уровней</button>
             <button onclick="closeCharacter()" style="width: 100%; margin-top: 10px; background: #6a2a2a;">Закрыть</button>
         </div>
     </div>
@@ -116,6 +115,26 @@
             <p style="text-align:center;">У вас есть: <b id="shop-crystals">0</b> 💎</p>
             <div id="shop-list"></div>
             <button onclick="closeShop()" style="width: 100%; margin-top: 15px; background: #6a2a2a;">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Окно Заданий -->
+    <div id="quests-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>📜 Доска заданий</h2>
+            <p style="text-align:center; font-size: 12px; color: #aaa;">Отправьте задание на подтверждение партнеру и получите билетики!</p>
+            <div id="quests-list"></div>
+            <button onclick="closeQuests()" style="width: 100%; margin-top: 15px; background: #6a2a2a;">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Окно Кассы -->
+    <div id="cashier-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>🎪 Касса</h2>
+            <p style="text-align:center;">У вас есть: <b id="cashier-tickets">0</b> 🎫</p>
+            <div id="cashier-list"></div>
+            <button onclick="closeCashier()" style="width: 100%; margin-top: 15px; background: #6a2a2a;">Закрыть</button>
         </div>
     </div>
 
