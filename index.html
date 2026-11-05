@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Маленькие Волшебники</title>
     <style>
-        /* Тёмное фэнтези */
+        /* --- СТИЛИ (Тёмное фэнтези) --- */
         body {
-            background-color: #1a1a1a;
+            background-color: #121212;
             color: #e0e0e0;
             font-family: 'Courier New', Courier, monospace;
             margin: 0;
@@ -15,6 +15,7 @@
             text-align: center;
             user-select: none;
         }
+
         #top-panel {
             display: flex;
             justify-content: space-between;
@@ -24,70 +25,96 @@
             border-radius: 8px;
             margin-bottom: 10px;
             border: 1px solid #444;
-            font-size: 14px;
+            font-size: 13px;
+            font-weight: bold;
+            flex-wrap: wrap;
+            gap: 5px;
         }
+
         #map {
             display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            gap: 2px;
-            background: #333;
-            padding: 5px;
+            grid-template-columns: repeat(30, 1fr);
+            gap: 1px;
+            background: #000;
+            padding: 4px;
             border-radius: 8px;
-            margin-bottom: 10px;
-            max-width: 500px;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 900px;
             margin-left: auto;
             margin-right: auto;
+            /* Прокрутка по горизонтали для мобильных */
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 2px solid #333;
         }
+
         .cell {
             aspect-ratio: 1;
-            background: #222;
-            border: 1px solid #444;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            color: #888;
+            font-size: 10px;
+            color: #666;
             cursor: pointer;
+            /* Минимальный размер, чтобы клетки не сжимались в точку */
+            min-width: 16px;
+            min-height: 16px;
         }
+
+        /* Подсветка при наведении (для ПК) */
+        .cell:hover {
+            background: #333;
+        }
+
+        /* Подсветка при нажатии (для мобильных) */
         .cell:active {
-            background: #444;
+            background: #555;
         }
+
         #bottom-panel {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 5px;
+            gap: 8px;
             max-width: 500px;
             margin: 0 auto;
         }
+
         button {
-            background: #3a2a4a;
-            color: #fff;
-            border: 1px solid #5a4a6a;
+            background: #2e1e3e;
+            color: #f0f0f0;
+            border: 1px solid #6a4a8a;
             padding: 12px;
-            border-radius: 5px;
+            border-radius: 6px;
             font-family: inherit;
             font-size: 14px;
+            font-weight: bold;
             cursor: pointer;
+            transition: background 0.2s;
         }
+
         button:active {
             background: #5a4a6a;
         }
     </style>
 </head>
 <body>
-    <!-- Верхняя панель -->
+
+    <!-- Верхняя панель (Статы) -->
     <div id="top-panel">
-        <span id="player-name">Игрок</span>
+        <span id="player-name">Загрузка...</span>
         <span id="player-level">Ур. 1</span>
         <span id="player-hp">10/10 HP</span>
         <span id="player-tickets">🎫 0</span>
         <span id="player-crystals">💎 0</span>
     </div>
 
-    <!-- Карта -->
+    <!-- Игровая карта -->
     <div id="map"></div>
 
-    <!-- Нижняя панель -->
+    <!-- Кнопки управления -->
     <div id="bottom-panel">
         <button onclick="showInventory()">Инвентарь</button>
         <button onclick="showQuests()">Задания</button>
@@ -95,11 +122,13 @@
         <button onclick="showMenu()">В игру</button>
     </div>
 
-    <!-- Подключение Firebase -->
+    <!-- Подключение Firebase и запуск игры -->
     <script type="module">
+        // Импортируем все нужные функции из Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+        // Настройки твоего проекта Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAaA67URrVAeCBHQGVKxcTHd65ggnwOStU",
             authDomain: "magic-duo.firebaseapp.com",
@@ -110,13 +139,14 @@
             appId: "1:194532347648:web:48542437a83b225045ede5"
         };
 
+        // Инициализация Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Передаем функции в глобальную область, чтобы script.js их видел
-        window.gameDB = { db, ref, set, onValue, update };
+        // Передаем функции в глобальную область, чтобы файл script.js их видел
+        window.gameDB = { db, ref, set, onValue, update, get };
         
-        // Запускаем основной скрипт после загрузки Firebase
+        // Подгружаем основной скрипт игры после инициализации Firebase
         const script = document.createElement('script');
         script.src = 'script.js';
         document.body.appendChild(script);
