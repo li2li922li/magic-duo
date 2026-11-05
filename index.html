@@ -10,27 +10,33 @@
         #map { display: grid; grid-template-columns: repeat(30, 1fr); gap: 1px; background: #000; padding: 4px; border-radius: 8px; margin-bottom: 15px; width: 100%; max-width: 900px; margin-left: auto; margin-right: auto; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 2px solid #333; }
         .cell { aspect-ratio: 1; background: #1a1a1a; border: 1px solid #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666; cursor: pointer; min-width: 16px; min-height: 16px; }
         .cell:hover { background: #333; } .cell:active { background: #555; }
-        #bottom-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 500px; margin: 0 auto; }
-        button { background: #2e1e3e; color: #f0f0f0; border: 1px solid #6a4a8a; padding: 12px; border-radius: 6px; font-family: inherit; font-size: 14px; font-weight: bold; cursor: pointer; }
+        
+        #bottom-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; max-width: 600px; margin: 0 auto; }
+        button { background: #2e1e3e; color: #f0f0f0; border: 1px solid #6a4a8a; padding: 10px; border-radius: 6px; font-family: inherit; font-size: 12px; font-weight: bold; cursor: pointer; }
         button:active { background: #5a4a6a; }
 
-        /* --- СТИЛИ ДЛЯ БОЯ И ОКОН --- */
-        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; }
-        #modal-content { background: #1e1e24; border: 2px solid #6a4a8a; border-radius: 10px; padding: 20px; width: 90%; max-width: 400px; text-align: left; box-shadow: 0 0 20px rgba(106, 74, 138, 0.5); }
-        #modal-content h2 { margin-top: 0; color: #ffcc00; text-align: center; font-size: 20px; }
-        .monster-desc { font-size: 13px; color: #aaa; margin-bottom: 15px; font-style: italic; }
+        /* --- СТИЛИ ДЛЯ ОКОН --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: #1e1e24; border: 2px solid #6a4a8a; border-radius: 10px; padding: 20px; width: 90%; max-width: 400px; text-align: left; box-shadow: 0 0 20px rgba(106, 74, 138, 0.5); max-height: 80vh; overflow-y: auto; }
+        .modal-content h2 { margin-top: 0; color: #ffcc00; text-align: center; font-size: 20px; }
+        
         .monster-stats { color: #ff6b6b; font-weight: bold; font-size: 16px; margin-bottom: 10px; text-align: center; }
+        .monster-desc { font-size: 13px; color: #aaa; margin-bottom: 15px; font-style: italic; }
         .battle-log { background: #000; color: #fff; padding: 10px; border-radius: 5px; height: 80px; overflow-y: auto; font-size: 12px; margin-bottom: 15px; border: 1px solid #333; }
         .battle-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
         .battle-btn { background: #333; border: 1px solid #555; font-size: 12px; padding: 8px; }
-        .battle-btn:active { background: #555; }
         .close-btn { grid-column: span 2; background: #6a2a2a; border-color: #8a4a4a; margin-top: 5px; }
-        
-        /* --- ИНВЕНТАРЬ --- */
-        #inventory-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; }
-        #inventory-content { background: #1e1e24; border: 2px solid #4a8a6a; border-radius: 10px; padding: 20px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
+
         .inv-item { background: #2a2a2a; border: 1px solid #444; padding: 10px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
-        .inv-btn { padding: 5px 10px; font-size: 12px; background: #4a6a4a; border: none; }
+        .shop-btn { padding: 5px 10px; font-size: 12px; background: #4a6a4a; border: none; }
+
+        /* --- ПЕРСОНАЖ --- */
+        .avatar-select { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 15px 0; }
+        .avatar-option { font-size: 24px; padding: 10px; background: #2a2a2a; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
+        .avatar-option.selected { border-color: #ffcc00; background: #3a3a1a; }
+        .xp-bar-container { background: #000; border-radius: 10px; height: 20px; width: 100%; margin: 10px 0; overflow: hidden; position: relative; border: 1px solid #444; }
+        .xp-bar-fill { background: #4a8a6a; height: 100%; width: 0%; transition: width 0.3s; }
+        .xp-text { position: absolute; width: 100%; text-align: center; top: 2px; font-size: 12px; font-weight: bold; color: #fff; text-shadow: 1px 1px 0 #000; }
     </style>
 </head>
 <body>
@@ -45,36 +51,71 @@
 
     <div id="map"></div>
 
+    <!-- Новая нижняя панель -->
     <div id="bottom-panel">
-        <button onclick="showInventory()">Инвентарь</button>
-        <button onclick="showQuests()">Задания</button>
-        <button onclick="refreshGame()">Обновить</button>
-        <button onclick="showMenu()">В игру</button>
+        <button onclick="showInventory()">🎒 Инвентарь</button>
+        <button onclick="showCharacter()">🧙‍♂️ Персонаж</button>
+        <button onclick="showQuests()">📜 Задания</button>
+        <button onclick="showShop()">🛒 Лавка</button>
+        <button onclick="showMenu()" style="grid-column: span 2;">⚔️ В игру</button>
     </div>
 
     <!-- Окно боя -->
-    <div id="modal-overlay">
-        <div id="modal-content">
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-content">
             <h2 id="monster-name">Монстр</h2>
             <div class="monster-stats" id="monster-hp">HP: 10/10</div>
             <div class="monster-desc" id="monster-desc">Описание</div>
             <div class="battle-log" id="battle-log"></div>
             <div class="battle-buttons">
-                <button class="battle-btn" onclick="attackMonster('bow')">🏹 Лук (-1 HP)</button>
-                <button class="battle-btn" onclick="attackMonster('magic')">✨ Магия (скоро)</button>
+                <button class="battle-btn" onclick="attackMonster('bow')">🏹 Лук</button>
                 <button class="battle-btn" onclick="useItemInBattle('potion')">🧪 Зелье</button>
                 <button class="battle-btn" onclick="useItemInBattle('food')">🍪 Еда</button>
-                <button class="battle-btn close-btn" onclick="closeBattle()">Отступить</button>
+                <button class="battle-btn close-btn" onclick="closeBattle(true)">Отступить</button>
             </div>
         </div>
     </div>
 
     <!-- Окно инвентаря -->
-    <div id="inventory-modal">
-        <div id="inventory-content">
+    <div id="inventory-modal" class="modal-overlay">
+        <div class="modal-content">
             <h2>Инвентарь</h2>
             <div id="inventory-list"></div>
             <button onclick="closeInventory()" style="width: 100%; margin-top: 15px; background: #6a2a2a;">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Окно персонажа -->
+    <div id="character-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Карточка Волшебника</h2>
+            <div style="text-align: center; font-size: 48px;" id="char-avatar">🧙‍♂️</div>
+            <h3 id="char-name" style="text-align: center; color: #ffcc00;">Имя</h3>
+            
+            <p><b>Выберите аватар:</b></p>
+            <div class="avatar-select" id="avatar-list">
+                <!-- Заполняется через JS -->
+            </div>
+
+            <p><b>Уровень: <span id="char-level">1</span></b></p>
+            <div class="xp-bar-container">
+                <div class="xp-bar-fill" id="xp-bar"></div>
+                <div class="xp-text" id="xp-text">0 / 100 XP</div>
+            </div>
+            <p style="font-size: 12px; color: #aaa;">* Нажмите на уровень, чтобы увидеть таблицу</p>
+
+            <button onclick="showLevelTable()" style="width: 100%; margin-top: 5px; background: #4a6a8a;">Посмотреть таблицу уровней</button>
+            <button onclick="closeCharacter()" style="width: 100%; margin-top: 10px; background: #6a2a2a;">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Окно Лавки -->
+    <div id="shop-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>🛒 Лавка Торговца</h2>
+            <p style="text-align:center;">У вас есть: <b id="shop-crystals">0</b> 💎</p>
+            <div id="shop-list"></div>
+            <button onclick="closeShop()" style="width: 100%; margin-top: 15px; background: #6a2a2a;">Закрыть</button>
         </div>
     </div>
 
