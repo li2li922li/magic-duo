@@ -552,4 +552,57 @@ window.addEventListener('load', () => {
                 } else {
                     shopList.innerHTML += `
                         <div class="inv-item" style="opacity: 0.4;">
-                            <div
+                            <div>
+                                <b>🔒 ${item.name}</b><br>
+                                <span style="font-size:10px; color:#aaa;">Откроется на ${item.levelReq} ур.</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            document.getElementById('shop-modal').style.display = 'flex';
+        });
+    };
+
+    window.buyItem = (itemId, price) => {
+        get(playerRef).then((snap) => {
+            const myData = snap.val();
+            if ((myData.crystals || 0) < price) {
+                showNotification("Недостаточно кристаллов!", 'damage');
+                return;
+            }
+
+            let inv = myData.inventory ? { ...myData.inventory } : {};
+            const newCrystals = myData.crystals - price;
+
+            // Логика добавления в инвентарь
+            if (itemId === 'arrows') inv.arrows = (inv.arrows || 0) + 5;
+            else if (itemId === 'potion') inv.invulnPotion = (inv.invulnPotion || 0) + 1;
+            else if (itemId === 'cookies') inv.cookies = (inv.cookies || 0) + 1;
+            else if (itemId === 'pie') inv.pie = (inv.pie || 0) + 1;
+            else {
+                // Для оружия и еды из таблицы (добавляем как ключ)
+                inv[itemId] = (inv[itemId] || 0) + 1;
+            }
+
+            update(playerRef, { crystals: newCrystals, inventory: inv });
+            showNotification(`Куплено! (-${price} 💎)`, 'crystal');
+            showShop(); // Обновить окно
+        });
+    };
+
+    window.closeShop = () => document.getElementById('shop-modal').style.display = 'none';
+
+    // --- ОБНОВЛЕНИЕ И СЛУШАТЕЛИ ---
+    onValue(worldRef, (worldSnap) => {
+        onValue(ref(db, 'players'), (playersSnap) => {
+            const playersData = playersSnap.val();
+            const myData = playersData ? playersData[playerName] : null;
+            renderWorld(worldSnap.val(), playersData, playerName, myData);
+        });
+    });
+
+    window.showQuests = () => showNotification('Заданий пока нет', 'other');
+    window.showMenu = () => showNotification('Вы уже в игре', 'other');
+});
