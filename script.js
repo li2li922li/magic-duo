@@ -33,101 +33,54 @@ window.addEventListener('load', () => {
     const playerRef = ref(db, 'players/' + playerName);
     const worldRef = ref(db, 'world');
 
+    // ИСПРАВЛЕНО: чистый стартовый инвентарь
     const startingInventory = { axe: 10, arrows: 20, evasionPotion: 2, cookies: 3, milk: 2 };
     const avatarOptions = ['🥷🏻', '🧚🏻‍♀️', '🧚🏻', '🧚🏻‍♂️', '🧜🏻‍♀️', '🧜🏻‍♂️', '👸🏻', '🤴🏻'];
 
     const levelRewards = {
-        2: { type: 'weapon', name: 'Боевой посох' },
-        3: { type: 'potion', name: 'Масло скользкости' },
-        4: { type: 'hp_crystals', hp: 5, crystals: 10 },
-        5: { type: 'food', name: 'Вино' },
-        6: { type: 'hp', hp: 5 },
-        7: { type: 'hp_crystals', hp: 5, crystals: 10 },
-        8: { type: 'hp', hp: 5 },
-        9: { type: 'hp_crystals', hp: 5, crystals: 10 },
-        10: { type: 'combo', items: ['wine'], crystals: 10 },
-        11: { type: 'weapon', name: 'Дубинка' },
-        12: { type: 'spell', name: 'Водяная сфера' },
-        13: { type: 'hp_crystals', hp: 10, crystals: 10 },
-        14: { type: 'food', name: 'Сырная тарелка' },
-        15: { type: 'hp', hp: 10 },
-        16: { type: 'hp_crystals', hp: 10, crystals: 10 },
-        17: { type: 'arrows', count: 10 },
-        18: { type: 'spell', name: 'Власть над ветрами' },
-        19: { type: 'hp_crystals', hp: 10, crystals: 10 },
-        20: { type: 'combo', items: ['windSpell'], crystals: 20 },
-        21: { type: 'weapon', name: 'Кинжал' },
-        22: { type: 'food', name: 'Шоколад' },
-        23: { type: 'potion', name: 'Зелье уменьшения' },
-        24: { type: 'hp_crystals', hp: 15, crystals: 20 },
-        25: { type: 'spell', name: 'Власть над водами' },
-        26: { type: 'hp', hp: 15 },
-        27: { type: 'hp_crystals', hp: 15, crystals: 20 },
-        28: { type: 'potion', name: 'Ядовитое зелье' },
-        29: { type: 'hp', hp: 15 },
-        30: { type: 'combo', items: ['chocolate', 'poisonPotion'], crystals: 30 },
-        31: { type: 'weapon', name: 'Кнут' },
-        32: { type: 'food', name: 'Пиво' },
-        33: { type: 'potion', name: 'Зелье силы великана' },
-        34: { type: 'hp_crystals', hp: 20, crystals: 30 },
-        35: { type: 'spell', name: 'Власть над огнём' },
-        36: { type: 'hp', hp: 20 },
-        37: { type: 'hp_crystals', hp: 20, crystals: 30 },
-        38: { type: 'hp', hp: 20 },
-        39: { type: 'hp_crystals', hp: 20, crystals: 30 },
-        40: { type: 'combo', items: ['healingPotion', 'wine', 'beer'], crystals: 40 },
-        41: { type: 'weapon', name: 'Молот' },
-        42: { type: 'food', name: 'Мясная нарезка' },
-        43: { type: 'potion', name: 'Зелье неуязвимости' },
-        44: { type: 'hp_crystals', hp: 25, crystals: 50 },
-        45: { type: 'spell', name: 'Вспышка мечей' },
-        46: { type: 'hp', hp: 25 },
-        47: { type: 'hp_crystals', hp: 25, crystals: 50 },
-        48: { type: 'food', name: 'Куриный шашлычок' },
-        49: { type: 'hp_crystals', hp: 25, crystals: 50 },
+        2: { type: 'weapon', name: 'Боевой посох' }, 3: { type: 'potion', name: 'Масло скользкости' }, 4: { type: 'hp_crystals', hp: 5, crystals: 10 },
+        5: { type: 'food', name: 'Вино' }, 6: { type: 'hp', hp: 5 }, 7: { type: 'hp_crystals', hp: 5, crystals: 10 },
+        8: { type: 'hp', hp: 5 }, 9: { type: 'hp_crystals', hp: 5, crystals: 10 }, 10: { type: 'combo', items: ['wine'], crystals: 10 },
+        11: { type: 'weapon', name: 'Дубинка' }, 12: { type: 'spell', name: 'Водяная сфера' }, 13: { type: 'hp_crystals', hp: 10, crystals: 10 },
+        14: { type: 'food', name: 'Сырная тарелка' }, 15: { type: 'hp', hp: 10 }, 16: { type: 'hp_crystals', hp: 10, crystals: 10 },
+        17: { type: 'arrows', count: 10 }, 18: { type: 'spell', name: 'Власть над ветрами' }, 19: { type: 'hp_crystals', hp: 10, crystals: 10 },
+        20: { type: 'combo', items: ['windSpell'], crystals: 20 }, 21: { type: 'weapon', name: 'Кинжал' }, 22: { type: 'food', name: 'Шоколад' },
+        23: { type: 'potion', name: 'Зелье уменьшения' }, 24: { type: 'hp_crystals', hp: 15, crystals: 20 }, 25: { type: 'spell', name: 'Власть над водами' },
+        26: { type: 'hp', hp: 15 }, 27: { type: 'hp_crystals', hp: 15, crystals: 20 }, 28: { type: 'potion', name: 'Ядовитое зелье' },
+        29: { type: 'hp', hp: 15 }, 30: { type: 'combo', items: ['chocolate', 'poisonPotion'], crystals: 30 }, 31: { type: 'weapon', name: 'Кнут' },
+        32: { type: 'food', name: 'Пиво' }, 33: { type: 'potion', name: 'Зелье силы великана' }, 34: { type: 'hp_crystals', hp: 20, crystals: 30 },
+        35: { type: 'spell', name: 'Власть над огнём' }, 36: { type: 'hp', hp: 20 }, 37: { type: 'hp_crystals', hp: 20, crystals: 30 },
+        38: { type: 'hp', hp: 20 }, 39: { type: 'hp_crystals', hp: 20, crystals: 30 }, 40: { type: 'combo', items: ['healingPotion', 'wine', 'beer'], crystals: 40 },
+        41: { type: 'weapon', name: 'Молот' }, 42: { type: 'food', name: 'Мясная нарезка' }, 43: { type: 'potion', name: 'Зелье неуязвимости' },
+        44: { type: 'hp_crystals', hp: 25, crystals: 50 }, 45: { type: 'spell', name: 'Вспышка мечей' }, 46: { type: 'hp', hp: 25 },
+        47: { type: 'hp_crystals', hp: 25, crystals: 50 }, 48: { type: 'food', name: 'Куриный шашлычок' }, 49: { type: 'hp_crystals', hp: 25, crystals: 50 },
         50: { type: 'combo', items: ['randomPotion'], crystals: 50 }
     };
 
     // ЗАДАНИЯ
     const questsList = [
-        { id: 'dishes', name: 'Помыть посуду', tickets: 1 },
-        { id: 'trash', name: 'Вынести мусор', tickets: 1 },
-        { id: 'package', name: 'Забрать посылку', tickets: 1 },
-        { id: 'zhkh_transfer', name: 'Передать показания ЖКХ', tickets: 1 },
-        { id: 'zhkh_pay', name: 'Оплатить ЖКХ', tickets: 1 },
-        { id: 'laundry_start', name: 'Запустить стирку', tickets: 2 },
-        { id: 'laundry_hang', name: 'Развесить белье', tickets: 1 },
-        { id: 'laundry_fold', name: 'Разобрать белье', tickets: 1 },
-        { id: 'bed', name: 'Поменять постельное белье', tickets: 2 },
-        { id: 'dust', name: 'Протереть пыль в 1 комнате', tickets: 3 },
-        { id: 'floors', name: 'Помыть полы в 1 комнате', tickets: 3 },
-        { id: 'groceries', name: 'Закупиться продуктами', tickets: 3 },
-        { id: 'lunch', name: 'Приготовить обед', tickets: 5 },
-        { id: 'dinner', name: 'Приготовить ужин', tickets: 5 },
-        { id: 'massage', name: 'Сделать массаж', tickets: 5 },
-        { id: 'flowers', name: 'Подарить цветы просто так', tickets: 10 },
-        { id: 'gift', name: 'Подарить подарок просто так', tickets: 10 },
-        { id: 'bake', name: 'Испечь пирожки/торт', tickets: 20 },
-        { id: 'table', name: 'Убрать со стола', tickets: 1 },
-        { id: 'water_flowers', name: 'Полить цветы', tickets: 2 }
+        { id: 'dishes', name: 'Помыть посуду', tickets: 1 }, { id: 'trash', name: 'Вынести мусор', tickets: 1 },
+        { id: 'package', name: 'Забрать посылку', tickets: 1 }, { id: 'zhkh_transfer', name: 'Передать показания ЖКХ', tickets: 1 },
+        { id: 'zhkh_pay', name: 'Оплатить ЖКХ', tickets: 1 }, { id: 'laundry_start', name: 'Запустить стирку', tickets: 2 },
+        { id: 'laundry_hang', name: 'Развесить белье', tickets: 1 }, { id: 'laundry_fold', name: 'Разобрать белье', tickets: 1 },
+        { id: 'bed', name: 'Поменять постельное белье', tickets: 2 }, { id: 'dust', name: 'Протереть пыль в 1 комнате', tickets: 3 },
+        { id: 'floors', name: 'Помыть полы в 1 комнате', tickets: 3 }, { id: 'groceries', name: 'Закупиться продуктами', tickets: 3 },
+        { id: 'lunch', name: 'Приготовить обед', tickets: 5 }, { id: 'dinner', name: 'Приготовить ужин', tickets: 5 },
+        { id: 'massage', name: 'Сделать массаж', tickets: 5 }, { id: 'flowers', name: 'Подарить цветы просто так', tickets: 10 },
+        { id: 'gift', name: 'Подарить подарок просто так', tickets: 10 }, { id: 'bake', name: 'Испечь пирожки/торт', tickets: 20 },
+        { id: 'table', name: 'Убрать со стола', tickets: 1 }, { id: 'water_flowers', name: 'Полить цветы', tickets: 2 }
     ].sort((a, b) => a.tickets - b.tickets);
 
     // КАССА
     const cashierItems = [
         { id: 'crystals_10', name: 'Обменять 1 билет на 10 кристаллов', price: 1, type: 'crystals', value: 10 },
         { id: 'delay', name: 'Отсрочка домашнего дела на 1 день', price: 1, type: 'effect' },
-        { id: 'walk', name: 'Прогулка', price: 5, type: 'real' },
-        { id: 'massage', name: 'Получить массаж', price: 5, type: 'real' },
-        { id: 'beer', name: 'Пиво до 1л (1 раз в день)', price: 5, type: 'real' },
-        { id: 'hookah', name: 'Поход в кальянную', price: 10, type: 'real' },
-        { id: 'cinema', name: 'Поход в кино', price: 15, type: 'real' },
-        { id: 'sushi', name: 'Заказ роллов/суши', price: 15, type: 'real' },
-        { id: 'pizza', name: 'Заказ пиццы', price: 15, type: 'real' },
-        { id: 'restaurant', name: 'Поход в ресторан', price: 20, type: 'real' },
-        { id: 'lazy_day', name: 'Целый день ничего неделания', price: 10, type: 'real' },
-        { id: 'small_gift', name: 'Небольшой недорогой подарочек', price: 10, type: 'real' },
-        { id: 'romantic_dinner', name: 'Романтический ужин', price: 10, type: 'real' },
-        { id: 'unusual_date', name: 'Необычное свидание', price: 50, type: 'real' },
+        { id: 'walk', name: 'Прогулка', price: 5, type: 'real' }, { id: 'massage', name: 'Получить массаж', price: 5, type: 'real' },
+        { id: 'beer', name: 'Пиво до 1л (1 раз в день)', price: 5, type: 'real' }, { id: 'hookah', name: 'Поход в кальянную', price: 10, type: 'real' },
+        { id: 'cinema', name: 'Поход в кино', price: 15, type: 'real' }, { id: 'sushi', name: 'Заказ роллов/суши', price: 15, type: 'real' },
+        { id: 'pizza', name: 'Заказ пиццы', price: 15, type: 'real' }, { id: 'restaurant', name: 'Поход в ресторан', price: 20, type: 'real' },
+        { id: 'lazy_day', name: 'Целый день ничего неделания', price: 10, type: 'real' }, { id: 'small_gift', name: 'Небольшой недорогой подарочек', price: 10, type: 'real' },
+        { id: 'romantic_dinner', name: 'Романтический ужин', price: 10, type: 'real' }, { id: 'unusual_date', name: 'Необычное свидание', price: 50, type: 'real' },
         { id: 'trip', name: 'Поездка в другой город', price: 100, type: 'real' }
     ];
 
@@ -141,24 +94,37 @@ window.addEventListener('load', () => {
         }
     });
 
-    // --- ГЕНЕРАЦИЯ МИРА ---
+    // --- ГЕНЕРАЦИЯ МИРА (ИСПРАВЛЕНО: равномерно по всей карте) ---
     get(worldRef).then((snapshot) => {
         if (!snapshot.exists()) {
             const worldData = {};
-            let chestCount = 0, obstacleCount = 0, bossCount = 0;
-            const monsters = ['👹', '👺', '🤖', '🎃', '🧙🏻', '🧌', '🧛🏻‍♂️'];
+            const totalCells = mapSize * mapSize;
+            
+            // Сначала заполняем всё пустыми
+            for (let i = 0; i < totalCells; i++) worldData[i] = { type: 'empty', monsterType: null };
 
-            for (let i = 0; i < mapSize * mapSize; i++) {
-                let type = 'empty', monsterType = null;
-                const rand = Math.random();
-                
-                if (i === 0) type = 'empty';
-                else if (i === 1) type = 'cashier'; // Касса на второй клетке
-                else if (rand < 0.10 && obstacleCount < 150) { type = 'obstacle'; obstacleCount++; }
-                else if (rand < 0.15 && chestCount < 20) { type = 'chest'; chestCount++; }
-                else if (rand < 0.18 && bossCount < 15) { type = 'monster'; monsterType = monsters[Math.floor(Math.random() * monsters.length)]; bossCount++; }
-                worldData[i] = { type: type, monsterType: monsterType };
-            }
+            // Касса на второй клетке
+            worldData[1].type = 'cashier';
+
+            // Расставляем 150 завалов, 20 сундуков и 15 монстров
+            const placeRandom = (count, type, maxMonster = null) => {
+                let placed = 0;
+                while (placed < count) {
+                    const idx = Math.floor(Math.random() * totalCells);
+                    if (idx > 1 && worldData[idx].type === 'empty') { // не трогаем старт и кассу
+                        worldData[idx].type = type;
+                        if (type === 'monster' && maxMonster) {
+                            worldData[idx].monsterType = maxMonster[Math.floor(Math.random() * maxMonster.length)];
+                        }
+                        placed++;
+                    }
+                }
+            };
+
+            placeRandom(150, 'obstacle');
+            placeRandom(20, 'chest');
+            placeRandom(15, 'monster', ['👹', '👺', '🤖', '🎃', '🧙🏻', '🧌', '🧛🏻‍♂️']);
+
             set(worldRef, worldData);
         }
     });
@@ -209,7 +175,6 @@ window.addEventListener('load', () => {
     async function attemptMove(targetIndex, cellData, myData) {
         if (!myData) return;
         if (myData.position === targetIndex) {
-            // Мы уже стоим тут, значит хотим взаимодействовать
             if (cellData.type === 'monster') openBattle(targetIndex, cellData.monsterType, myData);
             if (cellData.type === 'obstacle') cutObstacle(targetIndex, myData);
             if (cellData.type === 'chest') openChest(targetIndex, myData);
@@ -217,7 +182,6 @@ window.addEventListener('load', () => {
             return;
         }
 
-        // Если клетка далеко - спрашиваем, бежать ли
         const currentPos = myData.position;
         const row = Math.floor(currentPos / mapSize), col = currentPos % mapSize;
         const targetRow = Math.floor(targetIndex / mapSize), targetCol = targetIndex % mapSize;
@@ -229,21 +193,15 @@ window.addEventListener('load', () => {
             return;
         }
 
-        // Если клетка соседняя
-        if (cellData.type === 'obstacle' && myData.inventory.axe <= 0) {
-            showNotification("Нужен топор!", 'damage'); return;
-        }
-        if (cellData.type === 'monster') {
-            openBattle(targetIndex, cellData.monsterType, myData); return;
-        }
+        if (cellData.type === 'obstacle' && myData.inventory.axe <= 0) { showNotification("Нужен топор!", 'damage'); return; }
+        if (cellData.type === 'monster') { openBattle(targetIndex, cellData.monsterType, myData); return; }
 
-        // Двигаемся
         update(playerRef, { position: targetIndex });
         if (cellData.type === 'chest') openChest(targetIndex, myData);
         if (cellData.type === 'cashier') showCashier();
     }
 
-    // Поиск пути (упрощенный BFS для обхода препятствий)
+    // ИСПРАВЛЕНО: обход ВСЕХ объектов (сундуки, монстры, деревья)
     function startPathfinding(targetIndex, myData) {
         get(worldRef).then((snap) => {
             const world = snap.val();
@@ -252,30 +210,24 @@ window.addEventListener('load', () => {
             const visited = new Set([start]);
             let path = null;
 
-            // Обход в ширину (ищем кратчайший путь)
             while (queue.length > 0) {
                 const currentPath = queue.shift();
                 const currPos = currentPath[currentPath.length - 1];
 
-                if (currPos === targetIndex) {
-                    path = currentPath;
-                    break;
-                }
+                if (currPos === targetIndex) { path = currentPath; break; }
 
                 const r = Math.floor(currPos / mapSize);
                 const c = currPos % mapSize;
                 const neighbors = [
-                    (r > 0) ? currPos - mapSize : null,
-                    (r < mapSize - 1) ? currPos + mapSize : null,
-                    (c > 0) ? currPos - 1 : null,
-                    (c < mapSize - 1) ? currPos + 1 : null
+                    (r > 0) ? currPos - mapSize : null, (r < mapSize - 1) ? currPos + mapSize : null,
+                    (c > 0) ? currPos - 1 : null, (c < mapSize - 1) ? currPos + 1 : null
                 ];
 
                 for (let n of neighbors) {
                     if (n !== null && !visited.has(n)) {
                         const cellType = world[n] ? world[n].type : 'empty';
-                        // Идем только по пустым и сундукам (препятствия и монстры блокируют)
-                        if (cellType === 'empty' || cellType === 'chest') {
+                        // Идем ТОЛЬКО по пустым клеткам (обход всего)
+                        if (cellType === 'empty') {
                             visited.add(n);
                             queue.push([...currentPath, n]);
                         }
@@ -284,16 +236,9 @@ window.addEventListener('load', () => {
             }
 
             if (path) {
-                // Начинаем анимацию движения
                 let step = 0;
                 const interval = setInterval(() => {
-                    if (step >= path.length - 1) {
-                        clearInterval(interval);
-                        // Дошли до места, взаимодействуем
-                        const finalCell = world[targetIndex] || { type: 'empty' };
-                        if (finalCell.type === 'chest') openChest(targetIndex, myData);
-                        return;
-                    }
+                    if (step >= path.length - 1) { clearInterval(interval); return; }
                     step++;
                     update(playerRef, { position: path[step] });
                 }, 300);
@@ -342,18 +287,13 @@ window.addEventListener('load', () => {
         while (true) {
             const requiredXP = newLevel * 100;
             if (newXp >= requiredXP && newLevel < 50) {
-                newXp -= requiredXP;
-                newLevel++;
-                leveledUp = true;
+                newXp -= requiredXP; newLevel++; leveledUp = true;
                 const reward = levelRewards[newLevel];
                 if (reward) {
                     if (reward.type === 'hp') newMaxHp += reward.hp;
                     else if (reward.type === 'hp_crystals') { newMaxHp += reward.hp; newCrystals += reward.crystals; }
                     else if (reward.type === 'arrows') newInv.arrows = (newInv.arrows || 0) + reward.count;
-                    else if (reward.type === 'combo') {
-                        newCrystals += reward.crystals;
-                        reward.items.forEach(item => newInv[item] = (newInv[item] || 0) + 1);
-                    }
+                    else if (reward.type === 'combo') { newCrystals += reward.crystals; reward.items.forEach(item => newInv[item] = (newInv[item] || 0) + 1); }
                 }
             } else break;
         }
@@ -370,23 +310,12 @@ window.addEventListener('load', () => {
     function askGiftAction(targetIndex, gift, myData) {
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay'; overlay.style.display = 'flex';
-        overlay.innerHTML = `
-            <div class="modal-content" style="text-align:center; border-color:#9370db;">
-                <h2 style="color:#dda0dd;">Вы нашли: ${gift}</h2>
-                <p>Что сделать?</p>
-                <div style="display:flex; gap:10px; justify-content:center;">
-                    <button id="btn-sell" style="background:#4a6a4a; padding:10px;">Продать (10 💎)</button>
-                    <button id="btn-gift" style="background:#6a4a8a; padding:10px;">Подарить</button>
-                </div>
-            </div>
-        `;
+        overlay.innerHTML = `<div class="modal-content" style="text-align:center; border-color:#9370db;"><h2 style="color:#dda0dd;">Вы нашли: ${gift}</h2><p>Что сделать?</p><div style="display:flex; gap:10px; justify-content:center;"><button id="btn-sell" style="background:#4a6a4a; padding:10px;">Продать (10 💎)</button><button id="btn-gift" style="background:#6a4a8a; padding:10px;">Подарить</button></div></div>`;
         document.body.appendChild(overlay);
-
         document.getElementById('btn-sell').onclick = () => {
             update(playerRef, { crystals: (myData.crystals || 0) + 10 });
             update(ref(db, `world/${targetIndex}`), { type: 'empty', monsterType: null });
-            showNotification("Продано за 10 💎", 'crystal');
-            overlay.remove();
+            showNotification("Продано за 10 💎", 'crystal'); overlay.remove();
         };
         document.getElementById('btn-gift').onclick = () => {
             get(ref(db, 'players')).then((snap) => {
@@ -395,9 +324,7 @@ window.addEventListener('load', () => {
                 if (partner) {
                     set(ref(db, `players/${partner}/gifts`).push(), { item: gift, from: playerName });
                     showNotification(`Подарок отправлен!`, 'gift');
-                } else {
-                    update(playerRef, { crystals: (myData.crystals || 0) + 10 });
-                }
+                } else { update(playerRef, { crystals: (myData.crystals || 0) + 10 }); }
                 update(ref(db, `world/${targetIndex}`), { type: 'empty', monsterType: null });
                 overlay.remove();
             });
@@ -417,12 +344,9 @@ window.addEventListener('load', () => {
     // --- БОЙ ---
     let currentBattle = { targetIndex: null, monsterHp: 10, monsterMaxHp: 10, monsterType: '👹', monsterName: 'Монстр', previousPos: 0 };
     const monsterDescriptions = {
-        '👹': { name: 'Огр', desc: 'Огромный, но медленный.', hp: 15, magic: 'Топот (урон 3)' },
-        '👺': { name: 'Гоблин', desc: 'Хитрый и быстрый.', hp: 8, magic: 'Яд (урон 1)' },
-        '🤖': { name: 'Древний Голем', desc: 'Машина из прошлого.', hp: 20, magic: 'Лазер (урон 4)' },
-        '🎃': { name: 'Тыквоголовый', desc: 'Светится в темноте.', hp: 10, magic: 'Страх (пропуск хода)' },
-        '🧙🏻': { name: 'Темный Маг', desc: 'Изгнанный волшебник.', hp: 12, magic: 'Огненный шар (урон 5)' },
-        '🧌': { name: 'Тролль', desc: 'Регенерирует.', hp: 18, magic: 'Регенерация (+3 HP)' },
+        '👹': { name: 'Огр', desc: 'Огромный, но медленный.', hp: 15, magic: 'Топот (урон 3)' }, '👺': { name: 'Гоблин', desc: 'Хитрый и быстрый.', hp: 8, magic: 'Яд (урон 1)' },
+        '🤖': { name: 'Древний Голем', desc: 'Машина из прошлого.', hp: 20, magic: 'Лазер (урон 4)' }, '🎃': { name: 'Тыквоголовый', desc: 'Светится в темноте.', hp: 10, magic: 'Страх (пропуск хода)' },
+        '🧙🏻': { name: 'Темный Маг', desc: 'Изгнанный волшебник.', hp: 12, magic: 'Огненный шар (урон 5)' }, '🧌': { name: 'Тролль', desc: 'Регенерирует.', hp: 18, magic: 'Регенерация (+3 HP)' },
         '🧛🏻‍♂️': { name: 'Вампир', desc: 'Пьет кровь.', hp: 14, magic: 'Вампиризм (урон 2)' }
     };
 
@@ -438,28 +362,30 @@ window.addEventListener('load', () => {
         document.getElementById('modal-overlay').style.display = 'flex';
     }
 
+    // ИСПРАВЛЕНО: Полный инвентарь в бою, без дублей
     function renderBattleInventory(myData) {
         const invDiv = document.getElementById('battle-inventory');
         invDiv.innerHTML = '';
         const inv = myData.inventory || {};
         
-        let items = [];
-        if (inv.arrows > 0) items.push({ id: 'bow', name: `🏹 Лук (Стрелы: ${inv.arrows})`, action: "attackMonster('bow')" });
-        if (inv.evasionPotion > 0) items.push({ id: 'evasionPotion', name: `💨 Зелье уклонения (x${inv.evasionPotion})`, action: `useItemInBattle('evasionPotion')` });
-        if (inv.cookies > 0) items.push({ id: 'cookies', name: `🍪 Печенье (x${inv.cookies})`, action: `useItemInBattle('cookies')` });
-        if (inv.milk > 0) items.push({ id: 'milk', name: `🥛 Молоко (x${inv.milk})`, action: `useItemInBattle('milk')` });
-        
-        // Оружие (если куплено)
-        if (inv.staff > 0) items.push({ id: 'staff', name: `🪄 Посох`, action: "attackMonster('staff')" });
-        if (inv.club > 0) items.push({ id: 'club', name: `🏏 Дубинка`, action: "attackMonster('club')" });
-        if (inv.dagger > 0) items.push({ id: 'dagger', name: `🗡 Кинжал`, action: "attackMonster('dagger')" });
+        const itemMapping = {
+            axe: '🪓 Топор', arrows: '🏹 Стрелы', evasionPotion: '💨 Зелье уклонения', cookies: '🍪 Печенье', milk: '🥛 Молоко',
+            staff: '🪄 Боевой посох', club: '🏏 Дубинка', dagger: '🗡 Кинжал', wine: '🍷 Вино', cheese: '🧀 Сыр', 
+            chocolate: '🍫 Шоколад', beer: '🍺 Пиво', meat: '🥩 Мясо'
+        };
 
-        if (items.length === 0) invDiv.innerHTML = '<p style="font-size:12px; text-align:center; color:#aaa;">Нет предметов для боя</p>';
-        else {
-            items.forEach(item => {
-                invDiv.innerHTML += `<button class="battle-btn" style="width:100%; margin-bottom:5px;" onclick="${item.action}">${item.name}</button>`;
-            });
+        let hasItems = false;
+        for (let key in inv) {
+            if (inv[key] > 0 && itemMapping[key]) {
+                hasItems = true;
+                let action = "attackMonster('" + key + "')";
+                if (['evasionPotion', 'cookies', 'milk', 'wine', 'cheese', 'chocolate', 'beer', 'meat'].includes(key)) {
+                    action = "useItemInBattle('" + key + "')";
+                }
+                invDiv.innerHTML += `<button class="battle-btn" style="width:100%; margin-bottom:5px;" onclick="${action}">${itemMapping[key]} (x${inv[key]})</button>`;
+            }
         }
+        if (!hasItems) invDiv.innerHTML = '<p style="font-size:12px; text-align:center; color:#aaa;">Нет предметов</p>';
     }
 
     function updateBattleHpUI() {
@@ -468,31 +394,31 @@ window.addEventListener('load', () => {
 
     window.closeBattle = (retreat = false) => {
         if (retreat) {
-            update(playerRef, { position: currentBattle.previousPos });
+            update(playerRef, { position: currentBattle.previousPos, invulnTurns: 0 }); // Сброс эффектов зелий
             showNotification("Вы отступили!", 'other');
         }
         document.getElementById('modal-overlay').style.display = 'none';
     };
 
-    // Нанесение урона (1 раз за ход)
     let turnInProgress = false;
     window.attackMonster = (weapon) => {
-        if (turnInProgress) return; // Защита от спама
+        if (turnInProgress) return;
         turnInProgress = true;
 
         get(playerRef).then((snap) => {
             const myData = snap.val();
             const log = document.getElementById('battle-log');
-            let damage = 0;
+            let damage = 1;
             let newInv = { ...myData.inventory };
 
-            if (weapon === 'bow') {
+            if (weapon === 'arrows') {
                 if (newInv.arrows <= 0) { log.innerHTML += '<br>Нет стрел!'; turnInProgress = false; return; }
-                newInv.arrows -= 1; damage = 1;
-                log.innerHTML += `<br>Вы выстрелили из лука! (-1 HP)`;
+                newInv.arrows -= 1; damage = 1; log.innerHTML += `<br>Вы выстрелили из лука! (-1 HP)`;
             } else if (weapon === 'staff') { damage = 2; log.innerHTML += `<br>Вы ударили посохом! (-2 HP)`; }
             else if (weapon === 'club') { damage = 3; log.innerHTML += `<br>Вы ударили дубинкой! (-3 HP)`; }
             else if (weapon === 'dagger') { damage = 4; log.innerHTML += `<br>Вы ударили кинжалом! (-4 HP)`; }
+            else if (weapon === 'whip') { damage = 5; log.innerHTML += `<br>Вы ударили кнутом! (-5 HP)`; }
+            else if (weapon === 'hammer') { damage = 6; log.innerHTML += `<br>Вы ударили молотом! (-6 HP)`; }
 
             currentBattle.monsterHp -= damage;
             update(playerRef, { inventory: newInv });
@@ -502,16 +428,13 @@ window.addEventListener('load', () => {
                 const xpGain = Math.floor(Math.random() * 15) + 5;
                 processXP(myData, xpGain);
                 log.innerHTML += `<br>Вы победили! +5 💎 и +${xpGain} XP.`;
-                update(playerRef, { crystals: (myData.crystals || 0) + 5 });
+                update(playerRef, { crystals: (myData.crystals || 0) + 5, invulnTurns: 0 }); // Сброс зелий
                 update(ref(db, `world/${currentBattle.targetIndex}`), { type: 'empty', monsterType: null });
                 setTimeout(() => { window.closeBattle(false); turnInProgress = false; }, 2000);
                 return;
             }
 
-            setTimeout(() => {
-                monsterTurn(myData);
-                turnInProgress = false;
-            }, 1000);
+            setTimeout(() => { monsterTurn(myData); turnInProgress = false; }, 1000);
         });
     };
 
@@ -523,18 +446,13 @@ window.addEventListener('load', () => {
             log.innerHTML += `<br>Монстр атакует, но зелье защищает вас!`;
             update(playerRef, { invulnTurns: myData.invulnTurns - 1 });
         } else {
-            if (Math.random() < 0.3) {
-                damage = Math.floor(Math.random() * 3) + 2;
-                log.innerHTML += `<br>Монстр использует МАГИЮ! (-${damage} HP)`;
-            } else {
-                damage = 1;
-                log.innerHTML += `<br>Монстр бьет вас! (-${damage} HP)`;
-            }
+            if (Math.random() < 0.3) { damage = Math.floor(Math.random() * 3) + 2; log.innerHTML += `<br>Монстр использует МАГИЮ! (-${damage} HP)`; }
+            else { damage = 1; log.innerHTML += `<br>Монстр бьет вас! (-${damage} HP)`; }
             const newHp = Math.max(0, (myData.hp || 10) - damage);
             update(playerRef, { hp: newHp });
             if (newHp <= 0) {
                 log.innerHTML += `<br>Вы проиграли... Возвращаетесь домой.`;
-                update(playerRef, { hp: 10, position: 0 });
+                update(playerRef, { hp: 10, position: 0, invulnTurns: 0 });
                 setTimeout(() => window.closeBattle(false), 2000);
             }
         }
@@ -550,40 +468,27 @@ window.addEventListener('load', () => {
             let inv = { ...myData.inventory };
             let used = false;
 
-            if (type === 'evasionPotion' && inv.evasionPotion > 0) {
-                inv.evasionPotion -= 1;
-                update(playerRef, { inventory: inv, invulnTurns: 2 });
-                log.innerHTML += `<br>Вы выпили зелье уклонения! (2 хода)`;
-                used = true;
-            } else if (type === 'cookies' && inv.cookies > 0) {
-                inv.cookies -= 1;
-                update(playerRef, { inventory: inv, hp: Math.min((myData.hp + 3), myData.maxHp) });
-                log.innerHTML += `<br>Вы съели печенье! (+3 HP)`;
-                used = true;
-            } else if (type === 'milk' && inv.milk > 0) {
-                inv.milk -= 1;
-                update(playerRef, { inventory: inv, hp: Math.min((myData.hp + 2), myData.maxHp) });
-                log.innerHTML += `<br>Вы выпили молоко! (+2 HP)`;
-                used = true;
-            }
+            if (type === 'evasionPotion' && inv.evasionPotion > 0) { inv.evasionPotion -= 1; update(playerRef, { inventory: inv, invulnTurns: 2 }); log.innerHTML += `<br>Выпито зелье уклонения!`; used = true; }
+            else if (type === 'cookies' && inv.cookies > 0) { inv.cookies -= 1; update(playerRef, { inventory: inv, hp: Math.min((myData.hp + 3), myData.maxHp) }); log.innerHTML += `<br>Съедено печенье! (+3 HP)`; used = true; }
+            else if (type === 'milk' && inv.milk > 0) { inv.milk -= 1; update(playerRef, { inventory: inv, hp: Math.min((myData.hp + 2), myData.maxHp) }); log.innerHTML += `<br>Выпито молоко! (+2 HP)`; used = true; }
+            else if (type === 'wine' && inv.wine > 0) { inv.wine -= 1; update(playerRef, { inventory: inv, hp: Math.min((myData.hp + 5), myData.maxHp) }); log.innerHTML += `<br>Выпито вино! (+5 HP)`; used = true; }
+            else if (type === 'cheese' && inv.cheese > 0) { inv.cheese -= 1; update(playerRef, { inventory: inv, hp: Math.min((myData.hp + 10), myData.maxHp) }); log.innerHTML += `<br>Съеден сыр! (+10 HP)`; used = true; }
 
             if (used) {
                 renderBattleInventory({ ...myData, inventory: inv });
                 setTimeout(() => { monsterTurn(myData); turnInProgress = false; }, 1000);
-            } else {
-                log.innerHTML += `<br>Нет предмета!`;
-                turnInProgress = false;
-            }
+            } else { log.innerHTML += `<br>Нет предмета!`; turnInProgress = false; }
         });
     };
 
-    // --- ИНВЕНТАРЬ ---
+    // --- ИНВЕНТАРЬ (ИСПРАВЛЕНО: без дублей) ---
     window.showInventory = () => {
         get(playerRef).then((snap) => {
             const myData = snap.val();
             const inv = myData.inventory || {};
             const list = document.getElementById('inventory-list');
             list.innerHTML = '';
+            
             const items = [
                 { name: '🪓 Топор', count: inv.axe, desc: `Прочность: ${inv.axe}/10` },
                 { name: '🏹 Стрелы', count: inv.arrows, desc: 'Урон 1' },
@@ -592,13 +497,10 @@ window.addEventListener('load', () => {
                 { name: '🥛 Молоко', count: inv.milk, desc: '+2 HP' },
                 { name: '🪄 Боевой посох', count: inv.staff, desc: 'Урон 2' },
                 { name: '🏏 Дубинка', count: inv.club, desc: 'Урон 3' },
-                { name: '🗡 Кинжал', count: inv.dagger, desc: 'Урон 4' }
+                { name: '🗡 Кинжал', count: inv.dagger, desc: 'Урон 4' },
+                { name: '🍷 Вино', count: inv.wine, desc: '+5 HP' },
+                { name: '🧀 Сыр', count: inv.cheese, desc: '+10 HP' }
             ];
-            for (let key in inv) {
-                if (!items.find(i => i.name.includes(key)) && typeof inv[key] === 'number' && inv[key] > 0) {
-                    items.push({ name: key, count: inv[key], desc: 'Предмет' });
-                }
-            }
 
             items.forEach(item => {
                 if (item.count > 0) {
@@ -612,7 +514,7 @@ window.addEventListener('load', () => {
 
     window.closeInventory = () => document.getElementById('inventory-modal').style.display = 'none';
 
-    // --- ПЕРСОНАЖ ---
+    // --- ПЕРСОНАЖ (С УВЕДОМЛЕНИЯМИ) ---
     window.showCharacter = () => {
         get(playerRef).then((snap) => {
             const myData = snap.val();
@@ -636,8 +538,50 @@ window.addEventListener('load', () => {
                 div.onclick = () => { update(playerRef, { avatar: av }); showCharacter(); };
                 avatarList.appendChild(div);
             });
+
+            // Загрузка уведомлений
+            const notifList = document.getElementById('notifications-list');
+            notifList.innerHTML = '<p style="font-size:12px; color:#aaa;">Загрузка...</p>';
+            
+            get(ref(db, `players/${playerName}/quests`)).then((qSnap) => {
+                const quests = qSnap.val();
+                notifList.innerHTML = '';
+                if (quests) {
+                    for (let key in quests) {
+                        const q = quests[key];
+                        const questName = questsList.find(x => x.id === q.questId)?.name || 'Задание';
+                        notifList.innerHTML += `
+                            <div class="notification-item">
+                                <div>Задание от <b>${q.from}</b>: ${questName}</div>
+                                <div class="notif-actions">
+                                    <button class="notif-btn" style="color:#4a6a4a;" onclick="confirmQuest('${key}', '${q.from}', ${q.tickets})">✔️</button>
+                                    <button class="notif-btn" style="color:#6a2a2a;" onclick="rejectQuest('${key}')">❌</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    notifList.innerHTML = '<p style="font-size:12px; color:#aaa;">Нет новых уведомлений</p>';
+                }
+            });
+
             document.getElementById('character-modal').style.display = 'flex';
         });
+    };
+
+    window.confirmQuest = (key, from, tickets) => {
+        get(ref(db, `players/${from}`)).then((snap) => {
+            const pData = snap.val();
+            update(ref(db, `players/${from}`), { tickets: (pData.tickets || 0) + tickets });
+            showNotification(`Подтверждено!`, 'player');
+        });
+        set(ref(db, `players/${playerName}/quests/${key}`), null);
+        showCharacter();
+    };
+
+    window.rejectQuest = (key) => {
+        set(ref(db, `players/${playerName}/quests/${key}`), null);
+        showCharacter();
     };
 
     window.closeCharacter = () => document.getElementById('character-modal').style.display = 'none';
@@ -670,18 +614,9 @@ window.addEventListener('load', () => {
 
             shopItems.forEach(item => {
                 if ((myData.level || 1) >= item.levelReq) {
-                    shopList.innerHTML += `
-                        <div class="inv-item">
-                            <div><b>${item.name}</b><br><span style="font-size:10px; color:#aaa;">${item.desc} (с ${item.levelReq} ур.)</span></div>
-                            <button class="shop-btn" onclick="buyItem('${item.id}', ${item.price})">${item.price} 💎</button>
-                        </div>
-                    `;
+                    shopList.innerHTML += `<div class="inv-item"><div><b>${item.name}</b><br><span style="font-size:10px; color:#aaa;">${item.desc} (с ${item.levelReq} ур.)</span></div><button class="shop-btn" onclick="buyItem('${item.id}', ${item.price})">${item.price} 💎</button></div>`;
                 } else {
-                    shopList.innerHTML += `
-                        <div class="inv-item" style="opacity: 0.4;">
-                            <div><b>🔒 ${item.name}</b><br><span style="font-size:10px; color:#aaa;">Откроется на ${item.levelReq} ур.</span></div>
-                        </div>
-                    `;
+                    shopList.innerHTML += `<div class="inv-item" style="opacity: 0.4;"><div><b>🔒 ${item.name}</b><br><span style="font-size:10px; color:#aaa;">Откроется на ${item.levelReq} ур.</span></div></div>`;
                 }
             });
             document.getElementById('shop-modal').style.display = 'flex';
@@ -711,12 +646,7 @@ window.addEventListener('load', () => {
         const list = document.getElementById('quests-list');
         list.innerHTML = '';
         questsList.forEach(q => {
-            list.innerHTML += `
-                <div class="quest-item">
-                    <div>${q.name}</div>
-                    <button class="shop-btn" onclick="sendQuest('${q.id}', ${q.tickets})">+${q.tickets} 🎫</button>
-                </div>
-            `;
+            list.innerHTML += `<div class="quest-item"><div>${q.name}</div><button class="shop-btn" onclick="sendQuest('${q.id}', ${q.tickets})">+${q.tickets} 🎫</button></div>`;
         });
         document.getElementById('quests-modal').style.display = 'flex';
     };
@@ -729,54 +659,13 @@ window.addEventListener('load', () => {
             
             if (partner) {
                 set(ref(db, `players/${partner}/quests`).push(), { questId, tickets, from: playerName });
-                showNotification(`Задание отправлено на проверку!`, 'gift');
+                showNotification(`Задание отправлено!`, 'gift');
                 closeQuests();
-            } else {
-                showNotification("Партнер не найден!", 'damage');
-            }
+            } else { showNotification("Партнер не найден!", 'damage'); }
         });
     };
 
     window.closeQuests = () => document.getElementById('quests-modal').style.display = 'none';
-
-    // Слушаем задания на подтверждение
-    onValue(ref(db, `players/${playerName}/quests`), (snap) => {
-        const quests = snap.val();
-        if (quests) {
-            for (let key in quests) {
-                const q = quests[key];
-                const questName = questsList.find(x => x.id === q.questId)?.name || 'Задание';
-                const overlay = document.createElement('div');
-                overlay.className = 'modal-overlay'; overlay.style.display = 'flex';
-                overlay.innerHTML = `
-                    <div class="modal-content" style="text-align:center;">
-                        <h2>Подтверждение</h2>
-                        <p>Игрок <b>${q.from}</b> выполнил: "${questName}"</p>
-                        <p>Подтвердить за +${q.tickets} 🎫?</p>
-                        <div style="display:flex; gap:10px; justify-content:center;">
-                            <button id="btn-yes" style="background:#4a6a4a;">Да</button>
-                            <button id="btn-no" style="background:#6a2a2a;">Нет</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(overlay);
-
-                document.getElementById('btn-yes').onclick = () => {
-                    get(ref(db, `players/${q.from}`)).then((snap) => {
-                        const pData = snap.val();
-                        update(ref(db, `players/${q.from}`), { tickets: (pData.tickets || 0) + q.tickets });
-                        showNotification(`Подтверждено!`, 'player');
-                    });
-                    set(ref(db, `players/${playerName}/quests/${key}`), null);
-                    overlay.remove();
-                };
-                document.getElementById('btn-no').onclick = () => {
-                    set(ref(db, `players/${playerName}/quests/${key}`), null);
-                    overlay.remove();
-                };
-            }
-        }
-    });
 
     // --- КАССА ---
     window.showCashier = () => {
@@ -786,12 +675,7 @@ window.addEventListener('load', () => {
             const list = document.getElementById('cashier-list');
             list.innerHTML = '';
             cashierItems.forEach(item => {
-                list.innerHTML += `
-                    <div class="inv-item">
-                        <div>${item.name}</div>
-                        <button class="shop-btn" onclick="buyCashier('${item.id}', ${item.price}, '${item.type}', ${item.value || 0})">${item.price} 🎫</button>
-                    </div>
-                `;
+                list.innerHTML += `<div class="inv-item"><div>${item.name}</div><button class="shop-btn" onclick="buyCashier('${item.id}', ${item.price}, '${item.type}', ${item.value || 0})">${item.price} 🎫</button></div>`;
             });
             document.getElementById('cashier-modal').style.display = 'flex';
         });
@@ -802,6 +686,15 @@ window.addEventListener('load', () => {
             const myData = snap.val();
             if ((myData.tickets || 0) < price) { showNotification("Недостаточно билетиков!", 'damage'); return; }
             
+            // Отправляем уведомление партнеру о покупке
+            get(ref(db, 'players')).then((pSnap) => {
+                const players = pSnap.val(); let partner = null;
+                for (let key in players) if (key !== playerName) partner = key;
+                if (partner) {
+                    set(ref(db, `players/${partner}/notifs`).push(), { text: `${playerName} купил: ${id}!` });
+                }
+            });
+
             if (type === 'crystals') {
                 update(playerRef, { tickets: myData.tickets - price, crystals: (myData.crystals || 0) + value });
                 showNotification(`Обменяно! +${value} 💎`, 'crystal');
@@ -814,6 +707,17 @@ window.addEventListener('load', () => {
     };
 
     window.closeCashier = () => document.getElementById('cashier-modal').style.display = 'none';
+
+    // Слушаем уведомления о покупках
+    onValue(ref(db, `players/${playerName}/notifs`), (snap) => {
+        const notifs = snap.val();
+        if (notifs) {
+            for (let key in notifs) {
+                showNotification(notifs[key].text, 'player');
+                set(ref(db, `players/${playerName}/notifs/${key}`), null);
+            }
+        }
+    });
 
     // --- СЛУШАТЕЛИ ---
     onValue(worldRef, (worldSnap) => {
