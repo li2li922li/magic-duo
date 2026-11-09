@@ -4,12 +4,8 @@ const mapContainer = document.getElementById('map');
 
 window.renderWorld = function(worldData, playersData, myName, myData) {
     try {
-        console.log("Начинаем отрисовку карты. Данные мира:", worldData); // Отладка
-        if (!mapContainer) {
-            console.error("Контейнер карты не найден в HTML!");
-            return;
-        }
-        
+        console.log("Отрисовка карты запущена. Данные мира:", worldData);
+        if (!mapContainer) return;
         mapContainer.innerHTML = '';
         
         if (myData) {
@@ -23,8 +19,6 @@ window.renderWorld = function(worldData, playersData, myName, myData) {
             const cell = document.createElement('div');
             cell.classList.add('cell');
             cell.id = `cell-${i}`;
-            
-            // Берем данные клетки из базы, если нет - пустая
             const cellData = (worldData && worldData[i]) ? worldData[i] : {type: 'empty'};
             
             if (cellData.type === 'obstacle') cell.textContent = '🌲';
@@ -49,7 +43,6 @@ window.renderWorld = function(worldData, playersData, myName, myData) {
                 }
             }
         }
-        console.log("Карта успешно отрисована!"); // Отладка
     } catch (e) {
         console.error("ОШИБКА В РЕНДЕРЕ КАРТЫ:", e);
     }
@@ -61,7 +54,6 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
         if (!myData) return;
         const playerRef = ref(db, 'players/' + window.game.playerName);
         
-        // Если мы уже на этой клетке
         if (myData.position === targetIndex) {
             if (cellData.type === 'monster') window.openBattle(targetIndex, cellData.monsterType, myData);
             if (cellData.type === 'obstacle') window.cutObstacle(targetIndex, myData);
@@ -74,7 +66,6 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
         const row = Math.floor(currentPos / mapSize), col = currentPos % mapSize;
         const targetRow = Math.floor(targetIndex / mapSize), targetCol = targetIndex % mapSize;
         
-        // Если клетка далеко - бежим
         if (Math.abs(row - targetRow) > 1 || Math.abs(col - targetCol) > 1) {
             if (cellData.type === 'obstacle') {
                 if (confirm("Побежать и разобрать завал?")) window.startPathfinding(targetIndex, myData, true);
@@ -84,14 +75,12 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
             return;
         }
 
-        // Если клетка соседняя
         if (cellData.type === 'obstacle' && (!myData.inventory || myData.inventory.axe <= 0)) { 
             if(window.showNotification) window.showNotification("Нужен топор! Купите в лавке.", 'damage'); 
             return; 
         }
         if (cellData.type === 'monster') { window.openBattle(targetIndex, cellData.monsterType, myData); return; }
         
-        // Двигаемся на пустые или разрешенные клетки
         if (cellData.type === 'empty' || cellData.type === 'chest' || cellData.type === 'cashier' || cellData.type === 'obstacle') {
             update(playerRef, { position: targetIndex });
             if (cellData.type === 'chest') window.openChest(targetIndex, myData);
@@ -108,10 +97,7 @@ window.startPathfinding = function(targetIndex, myData, autoAction = false) {
         const { ref, get, update, db } = window.game;
         get(ref(db, 'world')).then((snap) => {
             const world = snap.val();
-            if (!world) { 
-                if(window.showNotification) window.showNotification("Мир не загружен!", 'damage'); 
-                return; 
-            }
+            if (!world) return;
             
             const start = myData.position;
             const queue = [[start]];
@@ -127,7 +113,6 @@ window.startPathfinding = function(targetIndex, myData, autoAction = false) {
                 for (let n of neighbors) {
                     if (n !== null && !visited.has(n)) {
                         const cellType = world[n] ? world[n].type : 'empty';
-                        // Идем только по пустым клеткам, либо разрешаем шагнуть на цель, если это завал
                         if (cellType === 'empty' || (autoAction && n === targetIndex)) { 
                             visited.add(n); queue.push([...currentPath, n]); 
                         }
@@ -155,7 +140,8 @@ window.startPathfinding = function(targetIndex, myData, autoAction = false) {
         console.error("ОШИБКА ПРИ ПОИСКЕ ПУТИ:", e);
     }
 };
-// --- СЛУШАТЕЛЬ БАЗЫ ДАННЫХ (добавить в самый конец map.js) ---
+
+// --- ВОТ ЭТОТ КУСОК БЫЛ ПОТЕРЯН ---
 const { ref, onValue, db } = window.game;
 
 onValue(ref(db, 'world'), (worldSnap) => {
@@ -165,3 +151,4 @@ onValue(ref(db, 'world'), (worldSnap) => {
         window.renderWorld(worldSnap.val(), playersData, window.game.playerName, myData);
     });
 });
+// ----------------------------------
