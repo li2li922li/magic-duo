@@ -20,26 +20,11 @@ window.renderWorld = function(worldData, playersData, myName, myData) {
             cell.id = `cell-${i}`;
             const cellData = (worldData && worldData[i]) ? worldData[i] : {type: 'empty'};
             
-            // СБРАСЫВАЕМ стили картинки для каждой клетки, чтобы они не повторялись
-            cell.style.backgroundImage = 'none';
-            cell.textContent = '·';
-            cell.style.fontSize = '10px';
-            cell.style.color = '#666';
-
-            if (cellData.type === 'obstacle') {
-                cell.textContent = '🌲';
-            } else if (cellData.type === 'chest') {
-                cell.textContent = '🎁';
-            } else if (cellData.type === 'monster') {
-                // Теперь картинка вампира будет у всех монстров
-                cell.textContent = ''; // Убираем эмодзи
-                cell.style.backgroundImage = "url('vampire.png')"; 
-                cell.style.backgroundSize = 'cover';
-                cell.style.backgroundPosition = 'center';
-            } else if (cellData.type === 'cashier') {
-                cell.textContent = '🎪';
-                cell.style.fontSize = '14px';
-            }
+            if (cellData.type === 'obstacle') cell.textContent = '🌲';
+            else if (cellData.type === 'chest') cell.textContent = '🎁';
+            else if (cellData.type === 'monster') cell.textContent = cellData.monsterType || '👹';
+            else if (cellData.type === 'cashier') cell.textContent = '🎪';
+            else cell.textContent = '·';
             
             cell.addEventListener('click', () => window.attemptMove(i, cellData, myData));
             mapContainer.appendChild(cell);
@@ -54,8 +39,6 @@ window.renderWorld = function(worldData, playersData, myName, myData) {
                     cell.style.color = (p.name === myName) ? '#ffcc00' : '#00ccff';
                     cell.style.fontWeight = 'bold';
                     cell.style.fontSize = '14px';
-                    // Если на клетке игрок, убираем картинку монстра, чтобы было видно букву
-                    cell.style.backgroundImage = 'none'; 
                 }
             }
         }
@@ -66,6 +49,7 @@ window.renderWorld = function(worldData, playersData, myName, myData) {
 
 // Новая функция для кастомного окошка "Побежать?"
 window.showRunPrompt = function(targetIndex, myData, isObstacle = false) {
+    // Удаляем старое, если есть
     const oldPrompt = document.getElementById('run-prompt');
     if (oldPrompt) oldPrompt.remove();
 
