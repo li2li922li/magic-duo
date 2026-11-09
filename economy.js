@@ -13,7 +13,6 @@ const cashierItems = [
     { id: 'trip', name: 'Поездка в другой город', price: 100, type: 'real' }
 ];
 
-// Всплывающие уведомления
 const notifContainer = document.createElement('div');
 notifContainer.style.cssText = `position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 1000; pointer-events: none; width: 90%; max-width: 400px;`;
 document.body.appendChild(notifContainer);
@@ -33,16 +32,41 @@ window.showNotification = function(text, type) {
     setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(20px)'; setTimeout(() => el.remove(), 300); }, 4000);
 };
 
-// ЛАВКА (за кристаллы)
+// ЛАВКА
 window.showShop = () => {
     get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
         const myData = snap.val();
         document.getElementById('shop-crystals').textContent = myData.crystals || 0;
         const shopList = document.getElementById('shop-list'); shopList.innerHTML = '';
-        const shopItems = [ { id: 'arrows', name: '🏹 Деревянные стрелы (x5)', price: 5, levelReq: 1, desc: 'Боеприпас' }, { id: 'evasionPotion', name: '💨 Зелье уклонения', price: 15, levelReq: 1, desc: '2 хода без урона' }, { id: 'cookies', name: '🍪 Печенье', price: 10, levelReq: 1, desc: '+3 HP' }, { id: 'milk', name: '🥛 Молоко', price: 5, levelReq: 1, desc: '+2 HP' }, { id: 'axe', name: '🪓 Топор', price: 10, levelReq: 1, desc: 'Разбирает завалы' }, { id: 'staff', name: '🪄 Боевой посох', price: 20, levelReq: 2, desc: 'Урон 2' }, { id: 'wine', name: '🍷 Вино', price: 15, levelReq: 5, desc: '+5 HP' }, { id: 'club', name: '🏏 Дубинка', price: 30, levelReq: 11, desc: 'Урон 3' }, { id: 'cheese', name: '🧀 Сырная тарелка', price: 25, levelReq: 14, desc: '+10 HP' }, { id: 'dagger', name: '🗡 Кинжал', price: 40, levelReq: 21, desc: 'Урон 4' }, { id: 'chocolate', name: '🍫 Шоколад', price: 35, levelReq: 22, desc: '+20 HP' }, { id: 'whip', name: '🪢 Кнут', price: 60, levelReq: 31, desc: 'Урон 5' }, { id: 'beer', name: '🍺 Пиво', price: 45, levelReq: 32, desc: '+30 HP' }, { id: 'hammer', name: '🔨 Молот', price: 80, levelReq: 41, desc: 'Урон 6' }, { id: 'meat', name: '🥩 Мясная нарезка', price: 60, levelReq: 42, desc: '+40 HP' } ];
+        const shopItems = [ 
+            { id: 'arrows', name: '🏹 Деревянные стрелы (x5)', price: 5, levelReq: 1, desc: 'Боеприпас' }, 
+            { id: 'evasionPotion', name: '💨 Зелье уклонения', price: 15, levelReq: 1, desc: '2 хода без урона' }, 
+            { id: 'cookies', name: '🍪 Печенье', price: 10, levelReq: 1, desc: '+3 HP' }, 
+            { id: 'milk', name: '🥛 Молоко', price: 5, levelReq: 1, desc: '+2 HP' }, 
+            { id: 'axe', name: '🪓 Топор', price: 10, levelReq: 1, desc: 'Разбирает завалы' }, 
+            { id: 'staff', name: '🪄 Боевой посох', price: 20, levelReq: 2, desc: 'Урон 2' }, 
+            { id: 'wine', name: '🍷 Вино', price: 15, levelReq: 5, desc: '+5 HP' }, 
+            { id: 'club', name: '🏏 Дубинка', price: 30, levelReq: 11, desc: 'Урон 3' }, 
+            { id: 'cheese', name: '🧀 Сырная тарелка', price: 25, levelReq: 14, desc: '+10 HP' }, 
+            { id: 'dagger', name: '🗡 Кинжал', price: 40, levelReq: 21, desc: 'Урон 4' }, 
+            { id: 'chocolate', name: '🍫 Шоколад', price: 35, levelReq: 22, desc: '+20 HP' }, 
+            { id: 'whip', name: '🪢 Кнут', price: 60, levelReq: 31, desc: 'Урон 5' }, 
+            { id: 'beer', name: '🍺 Пиво', price: 45, levelReq: 32, desc: '+30 HP' }, 
+            { id: 'hammer', name: '🔨 Молот', price: 80, levelReq: 41, desc: 'Урон 6' }, 
+            { id: 'meat', name: '🥩 Мясная нарезка', price: 60, levelReq: 42, desc: '+40 HP' },
+            { id: 'bouquet', name: '💐 Букет (обмен 5 🌹)', price: 5, levelReq: 1, desc: 'Подарок для партнера' }
+        ];
         shopItems.forEach(item => {
-            if ((myData.level || 1) >= item.levelReq) shopList.innerHTML += `<div class="inv-item"><div><b>${item.name}</b><br><span style="font-size:10px; color:#aaa;">${item.desc} (с ${item.levelReq} ур.)</span></div><button class="shop-btn" onclick="buyItem('${item.id}', ${item.price})">${item.price} 💎</button></div>`;
-            else shopList.innerHTML += `<div class="inv-item" style="opacity: 0.4;"><div><b>🔒 ${item.name}</b><br><span style="font-size:10px; color:#aaa;">Откроется на ${item.levelReq} ур.</span></div></div>`;
+            if ((myData.level || 1) >= item.levelReq) {
+                if (item.id === 'bouquet') {
+                    const flowerCount = myData.inventory && myData.inventory.flower ? myData.inventory.flower : 0;
+                    shopList.innerHTML += `<div class="inv-item"><div><b>${item.name}</b><br><span style="font-size:10px; color:#aaa;">У вас: ${flowerCount} 🌹</span></div><button class="shop-btn" onclick="buyBouquet()">Обменять</button></div>`;
+                } else {
+                    shopList.innerHTML += `<div class="inv-item"><div><b>${item.name}</b><br><span style="font-size:10px; color:#aaa;">${item.desc} (с ${item.levelReq} ур.)</span></div><button class="shop-btn" onclick="buyItem('${item.id}', ${item.price})">${item.price} 💎</button></div>`;
+                }
+            } else {
+                shopList.innerHTML += `<div class="inv-item" style="opacity: 0.4;"><div><b>🔒 ${item.name}</b><br><span style="font-size:10px; color:#aaa;">Откроется на ${item.levelReq} ур.</span></div></div>`;
+            }
         });
         document.getElementById('shop-modal').style.display = 'flex';
     });
@@ -59,8 +83,26 @@ window.buyItem = (itemId, price) => {
         window.showNotification(`Куплено! (-${price} 💎)`, 'crystal'); window.showShop();
     });
 };
-window.closeShop = () => document.getElementById('shop-modal').style.display = 'none';
 
+window.buyBouquet = () => {
+    get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
+        const myData = snap.val();
+        let inv = myData.inventory ? { ...myData.inventory } : {};
+        const flowers = inv.flower || 0;
+        
+        if (flowers < 5) { window.showNotification("Нужно 5 цветов 🌹!", 'damage'); return; }
+        
+        inv.flower -= 5;
+        update(ref(db, 'players/' + window.game.playerName), { inventory: inv });
+        
+        // Сразу открываем окно подарка
+        window.askGiftAction(null, '💐', myData);
+        
+        window.closeShop();
+    });
+};
+
+window.closeShop = () => document.getElementById('shop-modal').style.display = 'none';
 // КАССА (с выбором игрока)
 let currentCashierBuy = null;
 
