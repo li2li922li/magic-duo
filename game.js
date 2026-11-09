@@ -3,6 +3,10 @@ const { db, ref, set, update, get, onValue } = window.game;
 let currentBattle = { targetIndex: null, monsterHp: 10, monsterMaxHp: 10, monsterType: '👹', monsterName: 'Монстр', previousPos: 0 };
 let turnInProgress = false;
 
+// Переменные для подарков
+let currentGift = null;
+let currentGiftIndex = null;
+
 const monsterDescriptions = { '👹': { name: 'Огр', desc: 'Огромный, но медленный.', hp: 15, magic: 'Топот (урон 3)' }, '👺': { name: 'Гоблин', desc: 'Хитрый и быстрый.', hp: 8, magic: 'Яд (урон 1)' }, '🤖': { name: 'Древний Голем', desc: 'Машина из прошлого.', hp: 20, magic: 'Лазер (урон 4)' }, '🎃': { name: 'Тыквоголовый', desc: 'Светится в темноте.', hp: 10, magic: 'Страх (пропуск хода)' }, '🧙🏻': { name: 'Темный Маг', desc: 'Изгнанный волшебник.', hp: 12, magic: 'Огненный шар (урон 5)' }, '🧌': { name: 'Тролль', desc: 'Регенерирует.', hp: 18, magic: 'Регенерация (+3 HP)' }, '🧛🏻‍♂️': { name: 'Вампир', desc: 'Пьет кровь.', hp: 14, magic: 'Вампиризм (урон 2)' } };
 
 // --- РАЗБОР ЗАВАЛОВ ---
@@ -34,11 +38,16 @@ window.openChest = function(index, myData) {
         if (window.showNotification) window.showNotification(`+5 кристаллов 💎 и +${xpGain} XP`, 'crystal');
     } else {
         const gifts = ['👑', '🕶', '👒', '💐', '🍱', '🏆', '🎮', '📱', '⌚️', '📷'];
-        window.askGiftAction(index, gifts[Math.floor(Math.random() * gifts.length)], myData);
+        const gift = gifts[Math.floor(Math.random() * gifts.length)];
+        window.askGiftAction(index, gift, myData);
     }
 };
 
 window.askGiftAction = function(targetIndex, gift, myData) {
+    // Сохраняем подарок в глобальные переменные, чтобы не передавать через HTML
+    currentGift = gift;
+    currentGiftIndex = targetIndex;
+
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay'; overlay.style.display = 'flex';
     overlay.innerHTML = `
@@ -56,7 +65,7 @@ window.askGiftAction = function(targetIndex, gift, myData) {
     // Продать
     document.getElementById('btn-sell').onclick = () => {
         update(ref(db, 'players/' + window.game.playerName), { crystals: (myData.crystals || 0) + 10 });
-        update(ref(db, `world/${targetIndex}`), { type: 'empty', monsterType: null });
+        update(ref(db, `world/${currentGiftIndex}`), { type: 'empty', monsterType: null });
         if (window.showNotification) window.showNotification("Продано за 10 💎", 'crystal'); 
         overlay.remove();
     };
@@ -73,7 +82,8 @@ window.askGiftAction = function(targetIndex, gift, myData) {
             for (let key in players) {
                 if (key !== window.game.playerName) {
                     found = true;
-                    list.innerHTML += `<div class="inv-item"><div>${key}</div><button type="button" class="shop-btn" onclick="window.sendGiftToPlayer('${key}', '${gift}', ${targetIndex}, '${JSON.stringify(myData).replace(/'/g, "\\'")}')">Отправить</button></div>`;
+                    // Кнопка вызывает функцию БЕЗ аргументов, данные уже сохранены в переменных
+                    list.innerHTML += `<div class="inv-item"><div>${key}</div><button type="button" class="shop-btn" onclick="window.sendSavedGift('${key}')">Отправить</button></div>`;
                 }
             }
             if (!found) list.innerHTML = '<p style="text-align:center;">Других игроков нет</p>';
@@ -82,12 +92,13 @@ window.askGiftAction = function(targetIndex, gift, myData) {
     };
 };
 
-window.sendGiftToPlayer = (partner, gift, targetIndex, myDataStr) => {
-    const myData = JSON.parse(myDataStr);
+// Новая функция отправки (берет данные из глобальных переменных)
+window.sendSavedGift = (partner) => {
+    if (!currentGift || !currentGiftIndex) return;
     const timestamp = Date.now();
     
     const giftRef = ref(db, `players/${partner}/gifts/${timestamp}`);
-    set(giftRef, { item: gift, from: window.game.playerName }).then(() => {
+    set(giftRef, { item: currentGift, from: window.game.playerName }).then(() => {
         
         const phrases = [
             "Твоей половинке будет приятно 💋",
@@ -100,8 +111,13 @@ window.sendGiftToPlayer = (partner, gift, targetIndex, myDataStr) => {
         
         if (window.showNotification) window.showNotification(randomPhrase, 'gift');
         
-        update(ref(db, `world/${targetIndex}`), { type: 'empty', monsterType: null });
+        update(ref(db, `world/${currentGiftIndex}`), { type: 'empty', monsterType: null });
         window.closeSelectPlayer();
+        
+        // Сбрасываем переменные после отправки
+        currentGift = null;
+        currentGiftIndex = null;
+        
     }).catch((error) => {
         alert("Ошибка при отправке подарка: " + error.message);
     });
@@ -118,7 +134,7 @@ onValue(ref(db, `players/${window.game.playerName}/gifts`), (snap) => {
     }
 });
 
-// --- БОЙ ---
+// --- БОЙ (без изменений) ---
 window.openBattle = function(index, monsterType, myData) {
     const info = monsterDescriptions[monsterType] || { name: 'Неизвестный', desc: '...', hp: 10, magic: '...' };
     currentBattle = { targetIndex: index, monsterHp: info.hp, monsterMaxHp: info.hp, monsterType: monsterType, monsterName: info.name, magic: info.magic, previousPos: myData.position };
