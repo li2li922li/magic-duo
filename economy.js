@@ -13,6 +13,7 @@ const cashierItems = [
     { id: 'trip', name: 'Поездка в другой город', price: 100, type: 'real' }
 ];
 
+// Всплывающие уведомления
 const notifContainer = document.createElement('div');
 notifContainer.style.cssText = `position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 1000; pointer-events: none; width: 90%; max-width: 400px;`;
 document.body.appendChild(notifContainer);
@@ -32,6 +33,7 @@ window.showNotification = function(text, type) {
     setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(20px)'; setTimeout(() => el.remove(), 300); }, 4000);
 };
 
+// ЛАВКА (за кристаллы)
 window.showShop = () => {
     get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
         const myData = snap.val();
@@ -59,23 +61,23 @@ window.buyItem = (itemId, price) => {
 };
 window.closeShop = () => document.getElementById('shop-modal').style.display = 'none';
 
-// КАССА
+// КАССА (с выбором игрока)
+let currentCashierBuy = null;
+
 window.showCashier = () => {
     get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
         const myData = snap.val();
         document.getElementById('cashier-tickets').textContent = myData.tickets || 0;
         const list = document.getElementById('cashier-list'); list.innerHTML = '';
         cashierItems.forEach(item => {
-            list.innerHTML += `<div class="inv-item"><div>${item.name}</div><button class="shop-btn" onclick="openCashierPlayerSelect('${item.id}', '${item.name}', ${item.price}, '${item.type}', ${item.value || 0})">${item.price} 🎫</button></div>`;
+            list.innerHTML += `<div class="inv-item"><div>${item.name}</div><button class="shop-btn" onclick="openCashierSelect('${item.id}', '${item.name}', ${item.price}, '${item.type}', ${item.value || 0})">${item.price} 🎫</button></div>`;
         });
         document.getElementById('cashier-modal').style.display = 'flex';
     });
 };
 
-// Выбор игрока для кассы
-let currentCashierBuy = null;
-
-window.openCashierPlayerSelect = (id, name, price, type, value) => {
+// Открываем список игроков для кассы
+window.openCashierSelect = (id, name, price, type, value) => {
     currentCashierBuy = { id, name, price, type, value };
     get(ref(db, 'players')).then((snap) => {
         const players = snap.val(); 
@@ -95,6 +97,7 @@ window.openCashierPlayerSelect = (id, name, price, type, value) => {
     });
 };
 
+// Подтверждение покупки в кассе
 window.confirmCashierPurchase = (partner) => {
     if (!currentCashierBuy) return;
     const { id, name, price, type, value } = currentCashierBuy;
@@ -107,14 +110,15 @@ window.confirmCashierPurchase = (partner) => {
             update(ref(db, 'players/' + window.game.playerName), { tickets: myData.tickets - price, crystals: (myData.crystals || 0) + value });
             window.showNotification(`Обменяно! +${value} 💎`, 'crystal');
         } else {
-            // Отправляем уведомление партнеру
+            // Отправляем уведомление партнеру как задание
             const notifRef = push(ref(db, `players/${partner}/quests`));
             set(notifRef, { 
                 questId: id, 
-                tickets: 0, // Не даем билетики за это, это просто покупка
+                tickets: 0, 
                 from: window.game.playerName,
                 isCashier: true,
-                cost: price
+                cost: price,
+                name: name
             });
             window.showNotification(`Покупка отправлена игроку ${partner}!`, 'gift');
         }
