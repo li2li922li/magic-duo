@@ -23,16 +23,36 @@ window.showCharacter = () => {
 
         const notifList = document.getElementById('notifications-list');
         notifList.innerHTML = '<p style="font-size:12px; color:#aaa;">Загрузка...</p>';
+        
+        // Загружаем задания и уведомления
         get(ref(db, `players/${window.game.playerName}/quests`)).then((qSnap) => {
-            const quests = qSnap.val();
-            notifList.innerHTML = '';
-            if (quests) {
-                for (let key in quests) {
-                    const q = quests[key];
-                    const questName = questsList.find(x => x.id === q.questId)?.name || 'Задание';
-                    notifList.innerHTML += `<div class="notification-item"><div>Задание от <b>${q.from}</b>: ${questName}</div><div class="notif-actions"><button class="notif-btn" style="color:#4a6a4a;" onclick="confirmQuest('${key}', '${q.from}', ${q.tickets})">✔️</button><button class="notif-btn" style="color:#6a2a2a;" onclick="rejectQuest('${key}')">❌</button></div></div>`;
+            get(ref(db, `players/${window.game.playerName}/notifs`)).then((nSnap) => {
+                const quests = qSnap.val();
+                const notifs = nSnap.val();
+                notifList.innerHTML = '';
+                
+                let hasNotifs = false;
+
+                // Выводим задания
+                if (quests) {
+                    hasNotifs = true;
+                    for (let key in quests) {
+                        const q = quests[key];
+                        const questName = questsList.find(x => x.id === q.questId)?.name || 'Задание';
+                        notifList.innerHTML += `<div class="notification-item"><div>Задание от <b>${q.from}</b>: ${questName}</div><div class="notif-actions"><button class="notif-btn" style="color:#4a6a4a;" onclick="confirmQuest('${key}', '${q.from}', ${q.tickets})">✔️</button><button class="notif-btn" style="color:#6a2a2a;" onclick="rejectQuest('${key}')">❌</button></div></div>`;
+                    }
                 }
-            } else notifList.innerHTML = '<p style="font-size:12px; color:#aaa;">Нет новых уведомлений</p>';
+
+                // Выводим уведомления о покупках (не удаляем их сразу, пусть висят)
+                if (notifs) {
+                    hasNotifs = true;
+                    for (let key in notifs) {
+                        notifList.innerHTML += `<div class="notification-item" style="border-left-color: #90ee90;"><div>${notifs[key].text}</div><div class="notif-actions"><button class="notif-btn" style="color:#aaa;" onclick="clearNotif('${key}')">❌</button></div></div>`;
+                    }
+                }
+
+                if (!hasNotifs) notifList.innerHTML = '<p style="font-size:12px; color:#aaa;">Нет новых уведомлений</p>';
+            });
         });
         document.getElementById('character-modal').style.display = 'flex';
     });
@@ -47,4 +67,11 @@ window.confirmQuest = (key, from, tickets) => {
 };
 
 window.rejectQuest = (key) => { set(ref(db, `players/${window.game.playerName}/quests/${key}`), null); window.showCharacter(); };
+
+// Функция, чтобы убрать уведомление о покупке после прочтения
+window.clearNotif = (key) => {
+    set(ref(db, `players/${window.game.playerName}/notifs/${key}`), null);
+    window.showCharacter();
+};
+
 window.closeCharacter = () => document.getElementById('character-modal').style.display = 'none';
