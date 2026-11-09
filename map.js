@@ -152,7 +152,8 @@ onValue(ref(db, 'world'), (worldSnap) => {
     });
 });
 // В самом низу map.js
-const { ref, onValue, db } = window.game;
+const { db } = window.game;
+const { ref, onValue } = window.game;
 
 onValue(ref(db, 'world'), (worldSnap) => {
     onValue(ref(db, 'players'), (playersSnap) => {
