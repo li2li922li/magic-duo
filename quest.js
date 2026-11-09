@@ -73,10 +73,10 @@ window.openQuest = function(questId, stageIndex, myData) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay'; overlay.style.display = 'flex';
     
-    // Проверяем, есть ли нужные предметы
     let canComplete = true;
     let requirementHtml = '';
     
+    // Проверяем предметы
     for (let key in stage.require) {
         const requiredAmount = stage.require[key];
         let haveAmount = 0;
@@ -86,7 +86,6 @@ window.openQuest = function(questId, stageIndex, myData) {
         
         if (haveAmount < requiredAmount) canComplete = false;
         
-        // Названия предметов для отображения
         const itemNames = { milk: '🥛 Молоко', cookies: '🍪 Печенье', axe: '🪓 Топор', arrows: '🏹 Стрелы', chocolate: '🍫 Шоколад', waterSphere: '🧪 Водяная Сфера', waterPower: '🧪 Власть над водами', crystals: '💎 Кристаллы' };
         const itemName = itemNames[key] || key;
         
@@ -114,52 +113,59 @@ window.openQuest = function(questId, stageIndex, myData) {
     `;
     document.body.appendChild(overlay);
 
-    // Кнопка "Отступить"
     document.getElementById('btn-close-quest').onclick = () => overlay.remove();
 
-    // Кнопка "Отдать"
     if (canComplete) {
         document.getElementById('btn-submit-quest').onclick = () => {
-            // Списываем предметы
-            let newInv = myData.inventory ? { ...myData.inventory } : {};
-            let newCrystals = myData.crystals || 0;
-            let newXp = myData.xp || 0;
-            let newTickets = myData.tickets || 0;
-
-            for (let key in stage.require) {
-                if (key === 'crystals') {
-                    newCrystals -= stage.require[key];
-                } else {
-                    newInv[key] = (newInv[key] || 0) - stage.require[key];
+            // Проверяем еще раз в базе перед списанием
+            get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
+                const freshData = snap.val();
+                let realCanComplete = true;
+                
+                for (let key in stage.require) {
+                    const requiredAmount = stage.require[key];
+                    let haveAmount = 0;
+                    if (key === 'crystals') haveAmount = freshData.crystals || 0;
+                    else if (freshData.inventory && freshData.inventory[key]) haveAmount = freshData.inventory[key];
+                    
+                    if (haveAmount < requiredAmount) realCanComplete = false;
                 }
-            }
 
-            // Начисляем награды
-            newXp += stage.rewardXp;
-            newTickets += stage.rewardTickets;
-            newCrystals += stage.rewardCrystals;
-            
-            if (stage.item === 'eagle') {
-                newInv['eagle'] = (newInv['eagle'] || 0) + 1;
-            } else if (stage.item === 'magicOrb') {
-                newInv['magicOrb'] = (newInv['magicOrb'] || 0) + 1;
-            }
+                if (!realCanComplete) {
+                    alert("У вас недостаточно предметов!");
+                    overlay.remove();
+                    return;
+                }
 
-            // Обновляем в базе
-            update(ref(db, 'players/' + window.game.playerName), {
-                inventory: newInv,
-                crystals: newCrystals,
-                xp: newXp,
-                tickets: newTickets
-            }).then(() => {
-                // Отмечаем, что эта стадия пройдена
-                update(ref(db, `players/${window.game.playerName}/questsProgress/${questId}`), { stage: stageIndex + 1 });
+                // Списываем предметы
+                let newInv = freshData.inventory ? { ...freshData.inventory } : {};
+                let newCrystals = freshData.crystals || 0;
+                let newXp = freshData.xp || 0;
+                let newTickets = freshData.tickets || 0;
+
+                for (let key in stage.require) {
+                    if (key === 'crystals') newCrystals -= stage.require[key];
+                    else newInv[key] = (newInv[key] || 0) - stage.require[key];
+                }
+
+                newXp += stage.rewardXp;
+                newTickets += stage.rewardTickets;
+                newCrystals += stage.rewardCrystals;
                 
-                window.showNotification(`Квест "${stage.title}" выполнен!`, 'player');
-                overlay.remove();
-                
-                // Пересчитываем уровень (если нужно)
-                if (window.processXP) window.processXP(myData, stage.rewardXp); // Начисляем опыт через level.js
+                if (stage.item === 'eagle') newInv['eagle'] = (newInv['eagle'] || 0) + 1;
+                else if (stage.item === 'magicOrb') newInv['magicOrb'] = (newInv['magicOrb'] || 0) + 1;
+
+                update(ref(db, 'players/' + window.game.playerName), {
+                    inventory: newInv,
+                    crystals: newCrystals,
+                    xp: newXp,
+                    tickets: newTickets
+                }).then(() => {
+                    update(ref(db, `players/${window.game.playerName}/questsProgress/${questId}`), { stage: stageIndex + 1 });
+                    window.showNotification(`Квест "${stage.title}" выполнен!`, 'player');
+                    overlay.remove();
+                    if (window.processXP) window.processXP(freshData, stage.rewardXp);
+                });
             });
         };
     }
