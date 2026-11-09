@@ -3,30 +3,27 @@ const { db, ref, set, update, get, onValue } = window.game;
 let currentBattle = { targetIndex: null, monsterHp: 10, monsterMaxHp: 10, monsterType: '👹', monsterName: 'Монстр', previousPos: 0 };
 let turnInProgress = false;
 
-const monsterDescriptions = { 
-    '👹': { name: 'Огр', desc: 'Огромный, но медленный.', hp: 15, magic: 'Топот (урон 3)' }, 
-    '👺': { name: 'Гоблин', desc: 'Хитрый и быстрый.', hp: 8, magic: 'Яд (урон 1)' }, 
-    '🤖': { name: 'Древний Голем', desc: 'Машина из прошлого.', hp: 20, magic: 'Лазер (урон 4)' }, 
-    '🎃': { name: 'Тыквоголовый', desc: 'Светится в темноте.', hp: 10, magic: 'Страх (пропуск хода)' }, 
-    '🧙🏻': { name: 'Темный Маг', desc: 'Изгнанный волшебник.', hp: 12, magic: 'Огненный шар (урон 5)' }, 
-    '🧌': { name: 'Тролль', desc: 'Регенерирует.', hp: 18, magic: 'Регенерация (+3 HP)' }, 
-    '🧛🏻‍♂️': { name: 'Вампир', desc: 'Пьет кровь.', hp: 14, magic: 'Вампиризм (урон 2)' } 
-};
+const monsterDescriptions = { '👹': { name: 'Огр', desc: 'Огромный, но медленный.', hp: 15, magic: 'Топот (урон 3)' }, '👺': { name: 'Гоблин', desc: 'Хитрый и быстрый.', hp: 8, magic: 'Яд (урон 1)' }, '🤖': { name: 'Древний Голем', desc: 'Машина из прошлого.', hp: 20, magic: 'Лазер (урон 4)' }, '🎃': { name: 'Тыквоголовый', desc: 'Светится в темноте.', hp: 10, magic: 'Страх (пропуск хода)' }, '🧙🏻': { name: 'Темный Маг', desc: 'Изгнанный волшебник.', hp: 12, magic: 'Огненный шар (урон 5)' }, '🧌': { name: 'Тролль', desc: 'Регенерирует.', hp: 18, magic: 'Регенерация (+3 HP)' }, '🧛🏻‍♂️': { name: 'Вампир', desc: 'Пьет кровь.', hp: 14, magic: 'Вампиризм (урон 2)' } };
 
+// --- РАЗБОР ЗАВАЛОВ ---
 window.cutObstacle = function(index, myData) {
     if (!myData.inventory) myData.inventory = {};
     if (myData.inventory.axe && myData.inventory.axe > 0) {
         const newInv = { ...myData.inventory, axe: myData.inventory.axe - 1 };
         const xpGain = Math.floor(Math.random() * 10) + 1;
+        
         if (window.processXP) window.processXP(myData, xpGain);
+        
         update(ref(db, 'players/' + window.game.playerName), { inventory: newInv });
         update(ref(db, `world/${index}`), { type: 'empty', monsterType: null });
+        
         if (window.showNotification) window.showNotification(`Завал разобран! Топор: ${newInv.axe}/10. +${xpGain} XP`, 'obstacle');
     } else {
         if (window.showNotification) window.showNotification("Топор сломался! Нужен новый.", 'damage');
     }
 };
 
+// --- СУНДУКИ И ПОДАРКИ ---
 window.openChest = function(index, myData) {
     const rand = Math.random();
     if (rand < 0.5) {
@@ -56,6 +53,7 @@ window.askGiftAction = function(targetIndex, gift, myData) {
     `;
     document.body.appendChild(overlay);
     
+    // Продать
     document.getElementById('btn-sell').onclick = () => {
         update(ref(db, 'players/' + window.game.playerName), { crystals: (myData.crystals || 0) + 10 });
         update(ref(db, `world/${targetIndex}`), { type: 'empty', monsterType: null });
@@ -63,6 +61,7 @@ window.askGiftAction = function(targetIndex, gift, myData) {
         overlay.remove();
     };
     
+    // Подарить
     document.getElementById('btn-gift').onclick = () => {
         overlay.remove(); 
         get(ref(db, 'players')).then((snap) => {
@@ -74,9 +73,7 @@ window.askGiftAction = function(targetIndex, gift, myData) {
             for (let key in players) {
                 if (key !== window.game.playerName) {
                     found = true;
-                    // Передаем данные в виде строки, чтобы они не сломались
-                    const safeData = encodeURIComponent(JSON.stringify(myData));
-                    list.innerHTML += `<div class="inv-item"><div>${key}</div><button type="button" class="shop-btn" onclick="window.sendGiftToPlayer('${key}', '${gift}', ${targetIndex}, '${safeData}')">Отправить</button></div>`;
+                    list.innerHTML += `<div class="inv-item"><div>${key}</div><button type="button" class="shop-btn" onclick="window.sendGiftToPlayer('${key}', '${gift}', ${targetIndex}, '${JSON.stringify(myData).replace(/'/g, "\\'")}')">Отправить</button></div>`;
                 }
             }
             if (!found) list.innerHTML = '<p style="text-align:center;">Других игроков нет</p>';
@@ -86,11 +83,12 @@ window.askGiftAction = function(targetIndex, gift, myData) {
 };
 
 window.sendGiftToPlayer = (partner, gift, targetIndex, myDataStr) => {
-    const myData = JSON.parse(decodeURIComponent(myDataStr));
+    const myData = JSON.parse(myDataStr);
     const timestamp = Date.now();
     
     const giftRef = ref(db, `players/${partner}/gifts/${timestamp}`);
     set(giftRef, { item: gift, from: window.game.playerName }).then(() => {
+        
         const phrases = [
             "Твоей половинке будет приятно 💋",
             "Плюсик в карму за подарочек любимке 👩‍❤️‍👨",
@@ -101,6 +99,7 @@ window.sendGiftToPlayer = (partner, gift, targetIndex, myDataStr) => {
         const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
         
         if (window.showNotification) window.showNotification(randomPhrase, 'gift');
+        
         update(ref(db, `world/${targetIndex}`), { type: 'empty', monsterType: null });
         window.closeSelectPlayer();
     }).catch((error) => {
@@ -113,9 +112,7 @@ onValue(ref(db, `players/${window.game.playerName}/gifts`), (snap) => {
     if (gifts) {
         for (let key in gifts) {
             const gift = gifts[key];
-            if (window.showNotification) {
-                window.showNotification(`Вам подарок от ${gift.from}: ${gift.item}!`, 'gift');
-            }
+            if (window.showNotification) window.showNotification(`Вам подарок от ${gift.from}: ${gift.item}!`, 'gift');
             set(ref(db, `players/${window.game.playerName}/gifts/${key}`), null);
         }
     }
