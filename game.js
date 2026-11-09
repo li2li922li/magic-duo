@@ -92,9 +92,16 @@ window.sendSavedGift = (partner) => {
     if (!currentGift || !currentGiftIndex) return;
     const timestamp = Date.now();
     
+    // Отправляем подарок в базу партнеру (он будет лежать там, пока партнер не зайдет)
     const giftRef = ref(db, `players/${partner}/gifts/${timestamp}`);
     set(giftRef, { item: currentGift, from: window.game.playerName }).then(() => {
         
+        // Начисляем кристаллы нам
+        get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
+            const myData = snap.val();
+            update(ref(db, 'players/' + window.game.playerName), { crystals: (myData.crystals || 0) + 10 });
+        });
+
         const phrases = [
             "Твоей половинке будет приятно 💋",
             "Плюсик в карму за подарочек любимке 👩‍❤️‍👨",
