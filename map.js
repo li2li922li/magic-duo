@@ -47,6 +47,39 @@ window.renderWorld = function(worldData, playersData, myName, myData) {
     }
 };
 
+// Новая функция для кастомного окошка "Побежать?"
+window.showRunPrompt = function(targetIndex, myData, isObstacle = false) {
+    // Удаляем старое, если есть
+    const oldPrompt = document.getElementById('run-prompt');
+    if (oldPrompt) oldPrompt.remove();
+
+    const prompt = document.createElement('div');
+    prompt.id = 'run-prompt';
+    prompt.style.cssText = `
+        position: fixed; bottom: 20%; left: 50%; transform: translateX(-50%);
+        background: rgba(0, 50, 0, 0.95); border: 2px solid #00ff00; 
+        color: #fff; padding: 15px; border-radius: 8px; z-index: 2000;
+        text-align: center; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        width: 200px;
+    `;
+    prompt.innerHTML = `
+        <p style="margin: 0 0 10px 0;">${isObstacle ? 'Побежать и разобрать?' : 'Побежать к этой клетке?'}</p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="run-yes" style="background: #006400; color: white; border: 1px solid #00ff00; padding: 5px 15px; border-radius: 4px; cursor: pointer;">Да</button>
+            <button id="run-no" style="background: #4a0000; color: white; border: 1px solid #ff0000; padding: 5px 15px; border-radius: 4px; cursor: pointer;">Нет</button>
+        </div>
+    `;
+    document.body.appendChild(prompt);
+
+    document.getElementById('run-yes').onclick = () => {
+        prompt.remove();
+        window.startPathfinding(targetIndex, myData, isObstacle);
+    };
+    document.getElementById('run-no').onclick = () => {
+        prompt.remove();
+    };
+};
+
 window.attemptMove = async function(targetIndex, cellData, myData) {
     try {
         const { ref, update, db } = window.game;
@@ -67,10 +100,10 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
         
         if (Math.abs(row - targetRow) > 1 || Math.abs(col - targetCol) > 1) {
             if (cellData.type === 'obstacle') {
-                if (confirm("Побежать и разобрать завал?")) window.startPathfinding(targetIndex, myData, true);
+                window.showRunPrompt(targetIndex, myData, true);
                 return;
             }
-            if (confirm("Побежать к этой клетке?")) window.startPathfinding(targetIndex, myData);
+            window.showRunPrompt(targetIndex, myData, false);
             return;
         }
 
@@ -140,7 +173,6 @@ window.startPathfinding = function(targetIndex, myData, autoAction = false) {
     }
 };
 
-// --- СЛУШАТЕЛЬ БАЗЫ ДАННЫХ (ИСПРАВЛЕНО: одно объявление) ---
 const { ref, onValue, db } = window.game;
 
 onValue(ref(db, 'world'), (worldSnap) => {
