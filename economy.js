@@ -101,14 +101,13 @@ window.confirmCashierPurchase = (id, name, price, type, value) => {
                 update(ref(db, 'players/' + window.game.playerName), { tickets: myData.tickets - price });
                 window.showNotification(`Куплено: ${name}!`, 'player');
                 
-                // УВЕДОМЛЕНИЕ ПАРТНЕРУ
+                // ИСПРАВЛЕНО: Отправка уведомления партнеру
                 get(ref(db, 'players')).then((pSnap) => {
                     const players = pSnap.val(); let partner = null;
                     for (let key in players) if (key !== window.game.playerName) partner = key;
                     if (partner) {
-                        // Создаем уникальный ключ для уведомления
-                        const notifRef = ref(db, `players/${partner}/notifs`).push();
-                        set(notifRef, { text: `${window.game.playerName} купил: ${name}. Выполни это!` });
+                        const notifRef = window.game.push(ref(db, `players/${partner}/notifs`));
+                        window.game.set(notifRef, { text: `🎁 ${window.game.playerName} купил: ${name}. Выполни это!` });
                     }
                 });
             }
@@ -121,13 +120,13 @@ window.confirmCashierPurchase = (id, name, price, type, value) => {
 
 window.closeCashier = () => document.getElementById('cashier-modal').style.display = 'none';
 
-// Слушатель уведомлений (о покупках)
+// Слушатель уведомлений
 onValue(ref(db, `players/${window.game.playerName}/notifs`), (snap) => {
     const notifs = snap.val();
     if (notifs) { 
         for (let key in notifs) { 
             window.showNotification(notifs[key].text, 'player'); 
-            set(ref(db, `players/${window.game.playerName}/notifs/${key}`), null); 
+            // Уведомления не удаляем из базы, просто они будут видны в карточке
         } 
     }
 });
