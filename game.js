@@ -5,32 +5,20 @@ let turnInProgress = false;
 
 const monsterDescriptions = { '👹': { name: 'Огр', desc: 'Огромный, но медленный.', hp: 15, magic: 'Топот (урон 3)' }, '👺': { name: 'Гоблин', desc: 'Хитрый и быстрый.', hp: 8, magic: 'Яд (урон 1)' }, '🤖': { name: 'Древний Голем', desc: 'Машина из прошлого.', hp: 20, magic: 'Лазер (урон 4)' }, '🎃': { name: 'Тыквоголовый', desc: 'Светится в темноте.', hp: 10, magic: 'Страх (пропуск хода)' }, '🧙🏻': { name: 'Темный Маг', desc: 'Изгнанный волшебник.', hp: 12, magic: 'Огненный шар (урон 5)' }, '🧌': { name: 'Тролль', desc: 'Регенерирует.', hp: 18, magic: 'Регенерация (+3 HP)' }, '🧛🏻‍♂️': { name: 'Вампир', desc: 'Пьет кровь.', hp: 14, magic: 'Вампиризм (урон 2)' } };
 
-// --- РАЗБОР ЗАВАЛОВ (вынесено наверх) ---
 window.cutObstacle = function(index, myData) {
     if (!myData.inventory) myData.inventory = {};
     if (myData.inventory.axe && myData.inventory.axe > 0) {
         const newInv = { ...myData.inventory, axe: myData.inventory.axe - 1 };
         const xpGain = Math.floor(Math.random() * 10) + 1;
-        
-        // Начисляем опыт
-        if (window.processXP) {
-            window.processXP(myData, xpGain);
-        } else {
-            console.log("processXP не найдена");
-        }
-        
+        if (window.processXP) window.processXP(myData, xpGain);
         update(ref(db, 'players/' + window.game.playerName), { inventory: newInv });
         update(ref(db, `world/${index}`), { type: 'empty', monsterType: null });
-        
-        if (window.showNotification) {
-            window.showNotification(`Завал разобран! Топор: ${newInv.axe}/10. +${xpGain} XP`, 'obstacle');
-        }
+        if (window.showNotification) window.showNotification(`Завал разобран! Топор: ${newInv.axe}/10. +${xpGain} XP`, 'obstacle');
     } else {
         if (window.showNotification) window.showNotification("Топор сломался! Нужен новый.", 'damage');
     }
 };
 
-// --- СУНДУКИ ---
 window.openChest = function(index, myData) {
     const rand = Math.random();
     if (rand < 0.5) {
@@ -50,21 +38,32 @@ window.askGiftAction = function(targetIndex, gift, myData) {
     overlay.className = 'modal-overlay'; overlay.style.display = 'flex';
     overlay.innerHTML = `<div class="modal-content" style="text-align:center; border-color:#9370db;"><h2 style="color:#dda0dd;">Вы нашли: ${gift}</h2><p>Что сделать?</p><div style="display:flex; gap:10px; justify-content:center;"><button id="btn-sell" style="background:#4a6a4a; padding:10px;">Продать (10 💎)</button><button id="btn-gift" style="background:#6a4a8a; padding:10px;">Подарить</button></div></div>`;
     document.body.appendChild(overlay);
+    
     document.getElementById('btn-sell').onclick = () => {
         update(ref(db, 'players/' + window.game.playerName), { crystals: (myData.crystals || 0) + 10 });
         update(ref(db, `world/${targetIndex}`), { type: 'empty', monsterType: null });
         if (window.showNotification) window.showNotification("Продано за 10 💎", 'crystal'); 
         overlay.remove();
     };
+    
     document.getElementById('btn-gift').onclick = () => {
         get(ref(db, 'players')).then((snap) => {
-            const players = snap.val(); let partner = null;
+            const players = snap.val(); 
+            let partner = null;
             for (let key in players) if (key !== window.game.playerName) partner = key;
+            
             if (partner) { 
-                set(window.game.push(ref(db, `players/${partner}/gifts`)), { item: gift, from: window.game.playerName }); 
-                if (window.showNotification) window.showNotification(`Подарок отправлен!`, 'gift'); 
+                // Отправляем подарок партнеру
+                const giftRef = ref(db, `players/${partner}/gifts`).push();
+                set(giftRef, { item: gift, from: window.game.playerName }); 
+                if (window.showNotification) {
+                    window.showNotification(`Ты умничка! Подарок ${gift} отправлен игроку ${partner}. Это учтено в твоей карме! 💖`, 'gift'); 
+                }
+            } else {
+                // Если партнера нет - продаем
+                update(ref(db, 'players/' + window.game.playerName), { crystals: (myData.crystals || 0) + 10 });
+                if (window.showNotification) window.showNotification("Партнер не найден. Продано за 10 💎", 'crystal');
             }
-            else update(ref(db, 'players/' + window.game.playerName), { crystals: (myData.crystals || 0) + 10 });
             update(ref(db, `world/${targetIndex}`), { type: 'empty', monsterType: null });
             overlay.remove();
         });
