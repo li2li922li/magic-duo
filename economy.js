@@ -1,9 +1,9 @@
 // economy.js
-const { db, ref, set, update, get, onValue } = window.game;
+const { db, ref, set, update, get, onValue, push } = window.game;
 
 const cashierItems = [
     { id: 'crystals_10', name: 'Обменять 1 билет на 10 кристаллов', price: 1, type: 'crystals', value: 10 },
-    { id: 'delay', name: 'Отсрочка домашнего дела на 1 день', price: 1, type: 'effect' },
+    { id: 'delay', name: 'Отсрочка домашнего дела на 1 день', price: 1, type: 'real' },
     { id: 'walk', name: 'Прогулка', price: 5, type: 'real' }, { id: 'massage', name: 'Получить массаж', price: 5, type: 'real' },
     { id: 'beer', name: 'Пиво до 1л (1 раз в день)', price: 5, type: 'real' }, { id: 'hookah', name: 'Поход в кальянную', price: 10, type: 'real' },
     { id: 'cinema', name: 'Поход в кино', price: 15, type: 'real' }, { id: 'sushi', name: 'Заказ роллов/суши', price: 15, type: 'real' },
@@ -13,6 +13,27 @@ const cashierItems = [
     { id: 'trip', name: 'Поездка в другой город', price: 100, type: 'real' }
 ];
 
+// Всплывающие уведомления
+const notifContainer = document.createElement('div');
+notifContainer.style.cssText = `position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 1000; pointer-events: none; width: 90%; max-width: 400px;`;
+document.body.appendChild(notifContainer);
+
+window.showNotification = function(text, type) {
+    const el = document.createElement('div');
+    el.textContent = text;
+    let bgColor = '#90ee90', borderColor = '#5cb85c';
+    if (type === 'obstacle') { bgColor = '#ffb347'; borderColor = '#d98c3a'; }
+    if (type === 'crystal') { bgColor = '#87ceeb'; borderColor = '#4682b4'; }
+    if (type === 'damage') { bgColor = '#ff6b6b'; borderColor = '#d13c3c'; }
+    if (type === 'player') { bgColor = '#ffb6c1'; borderColor = '#d17b8a'; }
+    if (type === 'gift') { bgColor = '#dda0dd'; borderColor = '#9370db'; }
+    el.style.cssText = `background: ${bgColor}; color: #111; padding: 10px 15px; border-radius: 5px; border: 2px solid ${borderColor}; font-weight: bold; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.5); opacity: 0; transition: all 0.3s ease; transform: translateY(20px); font-size: 14px;`;
+    notifContainer.appendChild(el);
+    setTimeout(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; }, 10);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(20px)'; setTimeout(() => el.remove(), 300); }, 4000);
+};
+
+// ЛАВКА (за кристаллы)
 window.showShop = () => {
     get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
         const myData = snap.val();
@@ -40,56 +61,75 @@ window.buyItem = (itemId, price) => {
 };
 window.closeShop = () => document.getElementById('shop-modal').style.display = 'none';
 
+// КАССА (за билетики)
 window.showCashier = () => {
     get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
         const myData = snap.val();
         document.getElementById('cashier-tickets').textContent = myData.tickets || 0;
         const list = document.getElementById('cashier-list'); list.innerHTML = '';
         cashierItems.forEach(item => {
-            list.innerHTML += `<div class="inv-item"><div>${item.name}</div><button class="shop-btn" onclick="buyCashier('${item.id}', ${item.price}, '${item.type}', ${item.value || 0})">${item.price} 🎫</button></div>`;
+            list.innerHTML += `<div class="inv-item"><div>${item.name}</div><button class="shop-btn" onclick="confirmCashierPurchase('${item.id}', '${item.name}', ${item.price}, '${item.type}', ${item.value || 0})">${item.price} 🎫</button></div>`;
         });
         document.getElementById('cashier-modal').style.display = 'flex';
     });
 };
 
-window.buyCashier = (id, price, type, value) => {
+// Окно подтверждения покупки
+window.confirmCashierPurchase = (id, name, price, type, value) => {
     get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
         const myData = snap.val();
         if ((myData.tickets || 0) < price) { window.showNotification("Недостаточно билетиков!", 'damage'); return; }
-        get(ref(db, 'players')).then((pSnap) => {
-            const players = pSnap.val(); let partner = null;
-            for (let key in players) if (key !== window.game.playerName) partner = key;
-            if (partner) set(ref(db, `players/${partner}/notifs`).push(), { text: `${window.game.playerName} купил: ${id}!` });
-        });
-        if (type === 'crystals') { update(ref(db, 'players/' + window.game.playerName), { tickets: myData.tickets - price, crystals: (myData.crystals || 0) + value }); window.showNotification(`Обменяно! +${value} 💎`, 'crystal'); }
-        else { update(ref(db, 'players/' + window.game.playerName), { tickets: myData.tickets - price }); window.showNotification(`Куплено: ${id}!`, 'player'); }
-        window.showCashier();
+        
+        // Создаем окно подтверждения
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay'; overlay.style.display = 'flex';
+        overlay.innerHTML = `
+            <div class="modal-content" style="text-align:center; border-color:#4a8a6a;">
+                <h2 style="color:#90ee90;">Подтверждение</h2>
+                <p>Купить: <b>${name}</b> за ${price} 🎫?</p>
+                <div style="display:flex; gap:10px; justify-content:center;">
+                    <button id="btn-buy-yes" style="background:#4a6a4a; padding:10px;">Да, купить</button>
+                    <button id="btn-buy-no" style="background:#6a2a2a; padding:10px;">Отмена</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        document.getElementById('btn-buy-yes').onclick = () => {
+            // Списываем билетики
+            if (type === 'crystals') {
+                update(ref(db, 'players/' + window.game.playerName), { tickets: myData.tickets - price, crystals: (myData.crystals || 0) + value });
+                window.showNotification(`Обменяно! +${value} 💎`, 'crystal');
+            } else {
+                update(ref(db, 'players/' + window.game.playerName), { tickets: myData.tickets - price });
+                window.showNotification(`Куплено: ${name}!`, 'player');
+                
+                // Отправляем уведомление партнеру
+                get(ref(db, 'players')).then((pSnap) => {
+                    const players = pSnap.val(); let partner = null;
+                    for (let key in players) if (key !== window.game.playerName) partner = key;
+                    if (partner) {
+                        const notifRef = window.game.push(ref(db, `players/${partner}/notifs`));
+                        window.game.set(notifRef, { text: `${window.game.playerName} купил: ${name}. Выполни это!` });
+                    }
+                });
+            }
+            overlay.remove();
+            window.showCashier(); // Обновить окно кассы
+        };
+        document.getElementById('btn-buy-no').onclick = () => overlay.remove();
     });
 };
+
 window.closeCashier = () => document.getElementById('cashier-modal').style.display = 'none';
 
-// Всплывающие уведомления
-const notifContainer = document.createElement('div');
-notifContainer.style.cssText = `position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 1000; pointer-events: none; width: 90%; max-width: 400px;`;
-document.body.appendChild(notifContainer);
-
-window.showNotification = function(text, type) {
-    const el = document.createElement('div');
-    el.textContent = text;
-    let bgColor = '#90ee90', borderColor = '#5cb85c';
-    if (type === 'obstacle') { bgColor = '#ffb347'; borderColor = '#d98c3a'; }
-    if (type === 'crystal') { bgColor = '#87ceeb'; borderColor = '#4682b4'; }
-    if (type === 'damage') { bgColor = '#ff6b6b'; borderColor = '#d13c3c'; }
-    if (type === 'player') { bgColor = '#ffb6c1'; borderColor = '#d17b8a'; }
-    if (type === 'gift') { bgColor = '#dda0dd'; borderColor = '#9370db'; }
-    el.style.cssText = `background: ${bgColor}; color: #111; padding: 10px 15px; border-radius: 5px; border: 2px solid ${borderColor}; font-weight: bold; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.5); opacity: 0; transition: all 0.3s ease; transform: translateY(20px); font-size: 14px;`;
-    notifContainer.appendChild(el);
-    setTimeout(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; }, 10);
-    setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(20px)'; setTimeout(() => el.remove(), 300); }, 4000);
-};
-
-// Слушатель уведомлений о покупках
+// Слушатель уведомлений (о покупках)
 onValue(ref(db, `players/${window.game.playerName}/notifs`), (snap) => {
     const notifs = snap.val();
-    if (notifs) { for (let key in notifs) { window.showNotification(notifs[key].text, 'player'); set(ref(db, `players/${window.game.playerName}/notifs/${key}`), null); } }
+    if (notifs) { 
+        for (let key in notifs) { 
+            window.showNotification(notifs[key].text, 'player'); 
+            set(ref(db, `players/${window.game.playerName}/notifs/${key}`), null); 
+        } 
+    }
 });
