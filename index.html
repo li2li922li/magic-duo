@@ -73,7 +73,7 @@
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, update, get, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAaA67URrVAeCBHQGVKxcTHd65ggnwOStU",
@@ -87,9 +87,10 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        window.game = { db, ref, set, onValue, update, get, playerName: "" };
+        
+        // ВАЖНО: добавили push в window.game
+        window.game = { db, ref, set, onValue, update, get, push, playerName: "" };
 
-        // Запускаем script.js после инициализации
         const script = document.createElement('script');
         script.type = 'module';
         script.src = 'script.js';
