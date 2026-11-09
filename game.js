@@ -1,5 +1,5 @@
 // game.js
-const { db, ref, set, update, get, onValue } = window.game;
+const { db, ref, set, update, get, onValue, push } = window.game;
 let currentBattle = { targetIndex: null, monsterHp: 10, monsterMaxHp: 10, monsterType: '👹', monsterName: 'Монстр', previousPos: 0 };
 let turnInProgress = false;
 
@@ -8,35 +8,27 @@ let currentGiftIndex = null;
 
 const monsterDescriptions = { '👹': { name: 'Огр', desc: 'Огромный, но медленный.', hp: 15, magic: 'Топот (урон 3)' }, '👺': { name: 'Гоблин', desc: 'Хитрый и быстрый.', hp: 8, magic: 'Яд (урон 1)' }, '🤖': { name: 'Древний Голем', desc: 'Машина из прошлого.', hp: 20, magic: 'Лазер (урон 4)' }, '🎃': { name: 'Тыквоголовый', desc: 'Светится в темноте.', hp: 10, magic: 'Страх (пропуск хода)' }, '🧙🏻': { name: 'Темный Маг', desc: 'Изгнанный волшебник.', hp: 12, magic: 'Огненный шар (урон 5)' }, '🧌': { name: 'Тролль', desc: 'Регенерирует.', hp: 18, magic: 'Регенерация (+3 HP)' }, '🧛🏻‍♂️': { name: 'Вампир', desc: 'Пьет кровь.', hp: 14, magic: 'Вампиризм (урон 2)' } };
 
-// --- РАЗБОР ЗАВАЛОВ (с HP и очками) ---
+// --- РАЗБОР ЗАВАЛОВ (Теперь с HP и рандомным опытом) ---
 window.cutObstacle = function(index, myData) {
     if (!myData.inventory) myData.inventory = {};
     if (myData.inventory.axe && myData.inventory.axe > 0) {
         const newInv = { ...myData.inventory, axe: myData.inventory.axe - 1 };
-        const xpGain = Math.floor(Math.random() * 16) + 5; // от 5 до 20
-        const hpGain = Math.floor(Math.random() * 5) + 1;   // от 1 до 5
+        const xpGain = Math.floor(Math.random() * 16) + 5; // Рандомно 5-20 опыта
+        const hpGain = Math.floor(Math.random() * 3) + 1; // Рандомно 1-3 HP
         
+        // Обновляем игрока (HP и инвентарь)
+        let newHp = Math.min((myData.hp || 10) + hpGain, myData.maxHp || 10);
+        update(ref(db, 'players/' + window.game.playerName), { inventory: newInv, hp: newHp });
+        
+        // Начисляем опыт
         if (window.processXP) window.processXP(myData, xpGain);
         
-        const newHp = Math.min((myData.hp || 10) + hpGain, myData.maxHp || 10);
-        update(ref(db, 'players/' + window.game.playerName), { inventory: newInv, hp: newHp });
-        update(ref(db, `world/${index}`), { type: 'empty', monsterType: null, obstacleType: null });
+        update(ref(db, `world/${index}`), { type: 'empty', monsterType: null });
         
-        if (window.showNotification) window.showNotification(`Завал разобран! Топор: ${newInv.axe}/10. +${xpGain} XP, +${hpGain} HP`, 'obstacle');
+        if (window.showNotification) window.showNotification(`Завал разобран! +${xpGain} XP, +${hpGain} HP. Топор: ${newInv.axe}/10`, 'obstacle');
     } else {
         if (window.showNotification) window.showNotification("Топор сломался! Нужен новый.", 'damage');
     }
-};
-
-// --- СБОР ЦВЕТОВ ---
-window.collectFlower = function(index, myData) {
-    const newInv = myData.inventory ? { ...myData.inventory } : {};
-    newInv['flower'] = (newInv['flower'] || 0) + 1;
-    
-    update(ref(db, 'players/' + window.game.playerName), { inventory: newInv });
-    update(ref(db, `world/${index}`), { type: 'empty', monsterType: null, obstacleType: null });
-    
-    if (window.showNotification) window.showNotification(`Вы собрали цветок! 🌹 (Всего: ${newInv['flower']})`, 'crystal');
 };
 
 // --- СУНДУКИ И ПОДАРКИ ---
@@ -46,7 +38,7 @@ window.openChest = function(index, myData) {
         const xpGain = Math.floor(Math.random() * 15) + 5;
         if (window.processXP) window.processXP(myData, xpGain);
         update(ref(db, 'players/' + window.game.playerName), { crystals: (myData.crystals || 0) + 5 });
-        update(ref(db, `world/${index}`), { type: 'empty', monsterType: null, obstacleType: null });
+        update(ref(db, `world/${index}`), { type: 'empty', monsterType: null });
         if (window.showNotification) window.showNotification(`+5 кристаллов 💎 и +${xpGain} XP`, 'crystal');
     } else {
         const gifts = ['👑', '🕶', '👒', '💐', '🍱', '🏆', '🎮', '📱', '⌚️', '📷'];
@@ -75,7 +67,7 @@ window.askGiftAction = function(targetIndex, gift, myData) {
     
     document.getElementById('btn-sell').onclick = () => {
         update(ref(db, 'players/' + window.game.playerName), { crystals: (myData.crystals || 0) + 10 });
-        update(ref(db, `world/${currentGiftIndex}`), { type: 'empty', monsterType: null, obstacleType: null });
+        update(ref(db, `world/${currentGiftIndex}`), { type: 'empty', monsterType: null });
         if (window.showNotification) window.showNotification("Продано за 10 💎", 'crystal'); 
         overlay.remove();
     };
@@ -106,7 +98,11 @@ window.sendSavedGift = (partner) => {
     
     const giftRef = ref(db, `players/${partner}/gifts/${timestamp}`);
     set(giftRef, { item: currentGift, from: window.game.playerName }).then(() => {
-        
+        get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
+            const myData = snap.val();
+            update(ref(db, 'players/' + window.game.playerName), { crystals: (myData.crystals || 0) + 10 });
+        });
+
         const phrases = [
             "Твоей половинке будет приятно 💋",
             "Плюсик в карму за подарочек любимке 👩‍❤️‍👨",
@@ -118,7 +114,7 @@ window.sendSavedGift = (partner) => {
         
         if (window.showNotification) window.showNotification(randomPhrase, 'gift');
         
-        update(ref(db, `world/${currentGiftIndex}`), { type: 'empty', monsterType: null, obstacleType: null });
+        update(ref(db, `world/${currentGiftIndex}`), { type: 'empty', monsterType: null });
         window.closeSelectPlayer();
         
         currentGift = null;
@@ -147,6 +143,36 @@ onValue(ref(db, `players/${window.game.playerName}/gifts`), (snap) => {
     }
 });
 
+// --- СБОР ЦВЕТОВ ---
+window.collectFlower = function(index, cellData, myData) {
+    // Добавляем цветок в инвентарь (всегда как '🌹')
+    let inv = myData.inventory || {};
+    inv['🌹'] = (inv['🌹'] || 0) + 1;
+    
+    update(ref(db, 'players/' + window.game.playerName), { inventory: inv });
+    update(ref(db, `world/${index}`), { type: 'empty', flowerType: null });
+    
+    if (window.showNotification) window.showNotification(`Вы собрали цветок! Всего: ${inv['🌹']}`, 'crystal');
+};
+
+// --- ОБМЕН ЦВЕТОВ НА БУКЕТ (в лавке) ---
+window.buyBouquet = function(myData) {
+    let inv = myData.inventory || {};
+    const flowerCount = inv['🌹'] || 0;
+    
+    if (flowerCount < 5) {
+        window.showNotification("Нужно 5 цветов для букета!", 'damage');
+        return;
+    }
+    
+    // Забираем 5 цветов
+    inv['🌹'] = flowerCount - 5;
+    update(ref(db, 'players/' + window.game.playerName), { inventory: inv });
+    
+    // Спрашиваем, что делать с букетом
+    window.askGiftAction(-1, '💐', myData); // -1 значит, что букет не лежит на карте
+};
+
 // --- БОЙ ---
 window.openBattle = function(index, monsterType, myData) {
     const info = monsterDescriptions[monsterType] || { name: 'Неизвестный', desc: '...', hp: 10, magic: '...' };
@@ -163,7 +189,7 @@ window.renderBattleInventory = function(myData) {
     const invDiv = document.getElementById('battle-inventory');
     invDiv.innerHTML = '';
     const inv = myData.inventory || {};
-    const itemMapping = { axe: '🪓 Топор', arrows: '🏹 Стрелы', evasionPotion: '💨 Зелье уклонения', cookies: '🍪 Печенье', milk: '🥛 Молоко', staff: '🪄 Боевой посох', club: '🏏 Дубинка', dagger: '🗡 Кинжал', wine: '🍷 Вино', cheese: '🧀 Сыр', chocolate: '🍫 Шоколад', beer: '🍺 Пиво', meat: '🥩 Мясо', flower: '🌹 Цветок' };
+    const itemMapping = { axe: '🪓 Топор', arrows: '🏹 Стрелы', evasionPotion: '💨 Зелье уклонения', cookies: '🍪 Печенье', milk: '🥛 Молоко', staff: '🪄 Боевой посох', club: '🏏 Дубинка', dagger: '🗡 Кинжал', wine: '🍷 Вино', cheese: '🧀 Сыр', chocolate: '🍫 Шоколад', beer: '🍺 Пиво', meat: '🥩 Мясо' };
     let hasItems = false;
     for (let key in inv) {
         if (inv[key] > 0 && itemMapping[key]) {
@@ -200,7 +226,7 @@ window.attackMonster = (weapon) => {
             const xpGain = Math.floor(Math.random() * 15) + 5;
             if (window.processXP) window.processXP(myData, xpGain); log.innerHTML += `<br>Вы победили! +5 💎 и +${xpGain} XP.`;
             update(ref(db, 'players/' + window.game.playerName), { crystals: (myData.crystals || 0) + 5, invulnTurns: 0 });
-            update(ref(db, `world/${currentBattle.targetIndex}`), { type: 'empty', monsterType: null, obstacleType: null });
+            update(ref(db, `world/${currentBattle.targetIndex}`), { type: 'empty', monsterType: null });
             setTimeout(() => { window.closeBattle(false); turnInProgress = false; }, 2000); return;
         }
         setTimeout(() => { window.monsterTurn(myData); turnInProgress = false; }, 1000);
