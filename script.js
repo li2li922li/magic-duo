@@ -21,7 +21,7 @@ window.addEventListener('load', async () => {
 
     const startingInventory = { axe: 10, arrows: 20, evasionPotion: 2, cookies: 3, milk: 2 };
 
-    // Создание игрока (если нет)
+    // Создание игрока
     get(playerRef).then((snapshot) => {
         if (!snapshot.exists()) {
             set(playerRef, {
@@ -32,7 +32,7 @@ window.addEventListener('load', async () => {
         }
     });
 
-    // Генерация мира (если нет)
+    // Генерация мира
     get(worldRef).then((snapshot) => {
         if (!snapshot.exists()) {
             const mapSize = 30;
