@@ -28,71 +28,56 @@ window.addEventListener('load', () => {
         }
     });
 
-    // Генерация мира (исправлено: используем пустые строки вместо null)
     get(worldRef).then((snapshot) => {
         if (!snapshot.exists()) {
             const mapSize = 30;
             const worldData = {};
             const totalCells = mapSize * mapSize;
-            
-            // Сначала все клетки пустые
             for (let i = 0; i < totalCells; i++) {
-                worldData[i] = { type: 'empty', monsterType: '', obstacleType: '' };
+                worldData[i] = { type: 'empty', monsterType: null };
             }
-            
-            // Касса
-            worldData[1] = { type: 'cashier', monsterType: '', obstacleType: '' };
+            worldData[1].type = 'cashier';
             
             // Жители
-            worldData[10] = { type: 'artiste', monsterType: '', obstacleType: '' };
-            worldData[50] = { type: 'sage', monsterType: '', obstacleType: '' };
+            worldData[10] = { type: 'artiste', monsterType: null };
+            worldData[50] = { type: 'sage', monsterType: null };
             
-            // Завалы
-            const obstacles = ['🌲', '🌳', '🪾', '🪨', '🛘'];
             let placedObs = 0;
             while (placedObs < 150) {
                 let idx = Math.floor(Math.random() * totalCells);
-                if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { 
-                    worldData[idx] = { type: 'obstacle', monsterType: '', obstacleType: obstacles[Math.floor(Math.random() * obstacles.length)] };
-                    placedObs++; 
-                }
+                if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { worldData[idx].type = 'obstacle'; placedObs++; }
             }
             
-            // Цветы
-            const flowers = ['🌼', '🌸', '🌺', '🌻', '🍀'];
-            let placedFlowers = 0;
-            while (placedFlowers < 40) {
-                let idx = Math.floor(Math.random() * totalCells);
-                if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { 
-                    worldData[idx] = { type: 'flower', monsterType: '', obstacleType: flowers[Math.floor(Math.random() * flowers.length)] };
-                    placedFlowers++; 
-                }
-            }
-            
-            // Сундуки
             let placedChests = 0;
             while (placedChests < 20) {
                 let idx = Math.floor(Math.random() * totalCells);
-                if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { 
-                    worldData[idx] = { type: 'chest', monsterType: '', obstacleType: '' };
-                    placedChests++; 
-                }
+                if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { worldData[idx].type = 'chest'; placedChests++; }
             }
             
-            // Монстры
             const monsters = ['👹', '👺', '🤖', '🎃', '🧙🏻', '🧌', '🧛🏻‍♂️'];
             let placedMon = 0;
             while (placedMon < 15) {
                 let idx = Math.floor(Math.random() * totalCells);
                 if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { 
-                    worldData[idx] = { type: 'monster', monsterType: monsters[Math.floor(Math.random() * monsters.length)], obstacleType: '' };
+                    worldData[idx].type = 'monster'; 
+                    worldData[idx].monsterType = monsters[Math.floor(Math.random() * monsters.length)]; 
                     placedMon++; 
                 }
             }
-            
-            set(worldRef, worldData).then(() => {
-                console.log("Мир успешно создан!");
-            });
+
+            // Добавляем цветы (например, 40 штук)
+            const flowerTypes = ['🌼', '🌸', '🌺', '🌻', '🍀'];
+            let placedFlowers = 0;
+            while (placedFlowers < 40) {
+                let idx = Math.floor(Math.random() * totalCells);
+                if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { 
+                    worldData[idx].type = 'flower'; 
+                    worldData[idx].flowerType = flowerTypes[Math.floor(Math.random() * flowerTypes.length)]; 
+                    placedFlowers++; 
+                }
+            }
+
+            set(worldRef, worldData);
         }
     });
 });
