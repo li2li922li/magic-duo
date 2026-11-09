@@ -20,12 +20,13 @@ window.renderWorld = function(worldData, playersData, myName, myData) {
             cell.id = `cell-${i}`;
             const cellData = (worldData && worldData[i]) ? worldData[i] : {type: 'empty'};
             
-            if (cellData.type === 'obstacle') cell.textContent = '🌲';
+            if (cellData.type === 'obstacle') cell.textContent = cellData.obstacleType || '🌲';
             else if (cellData.type === 'chest') cell.textContent = '🎁';
             else if (cellData.type === 'monster') cell.textContent = cellData.monsterType || '👹';
             else if (cellData.type === 'cashier') cell.textContent = '🎪';
             else if (cellData.type === 'artiste') cell.textContent = '🤹🏻‍♀️';
             else if (cellData.type === 'sage') cell.textContent = '🧘🏼‍♂️';
+            else if (cellData.type === 'flower') cell.textContent = cellData.obstacleType || '🌸';
             else cell.textContent = '·';
             
             cell.addEventListener('click', () => window.attemptMove(i, cellData, myData));
@@ -86,14 +87,12 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
         if (!myData) return;
         const playerRef = ref(db, 'players/' + window.game.playerName);
         
-        // Если мы уже на этой клетке
         if (myData.position === targetIndex) {
             if (cellData.type === 'monster') window.openBattle(targetIndex, cellData.monsterType, myData);
             if (cellData.type === 'obstacle') window.cutObstacle(targetIndex, myData);
             if (cellData.type === 'chest') window.openChest(targetIndex, myData);
             if (cellData.type === 'cashier') window.showCashier();
-            
-            // Обработка жителей
+            if (cellData.type === 'flower') window.collectFlower(targetIndex, myData);
             if (cellData.type === 'artiste') {
                 get(ref(db, `players/${window.game.playerName}/questsProgress/artiste`)).then((snap) => {
                     const progress = snap.val();
@@ -117,7 +116,6 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
         const row = Math.floor(currentPos / mapSize), col = currentPos % mapSize;
         const targetRow = Math.floor(targetIndex / mapSize), targetCol = targetIndex % mapSize;
         
-        // Если клетка далеко
         if (Math.abs(row - targetRow) > 1 || Math.abs(col - targetCol) > 1) {
             if (cellData.type === 'obstacle') {
                 window.showRunPrompt(targetIndex, myData, true);
@@ -127,21 +125,19 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
             return;
         }
 
-        // Если клетка соседняя
         if (cellData.type === 'obstacle' && (!myData.inventory || myData.inventory.axe <= 0)) { 
             if(window.showNotification) window.showNotification("Нужен топор! Купите в лавке.", 'damage'); 
             return; 
         }
         if (cellData.type === 'monster') { window.openBattle(targetIndex, cellData.monsterType, myData); return; }
         
-        // Двигаемся (на пустые, сундуки, кассу, жителей или завал)
-        if (cellData.type === 'empty' || cellData.type === 'chest' || cellData.type === 'cashier' || cellData.type === 'obstacle' || cellData.type === 'artiste' || cellData.type === 'sage') {
+        if (cellData.type === 'empty' || cellData.type === 'chest' || cellData.type === 'cashier' || cellData.type === 'obstacle' || cellData.type === 'artiste' || cellData.type === 'sage' || cellData.type === 'flower') {
             update(playerRef, { position: targetIndex });
             if (cellData.type === 'chest') window.openChest(targetIndex, myData);
             if (cellData.type === 'cashier') window.showCashier();
             if (cellData.type === 'obstacle') window.cutObstacle(targetIndex, myData);
+            if (cellData.type === 'flower') window.collectFlower(targetIndex, myData);
             if (cellData.type === 'artiste' || cellData.type === 'sage') {
-                // Если наступили на клетку с жителем - сразу открываем квест
                 if (cellData.type === 'artiste') {
                     get(ref(db, `players/${window.game.playerName}/questsProgress/artiste`)).then((snap) => {
                         const progress = snap.val();
@@ -186,7 +182,6 @@ window.startPathfinding = function(targetIndex, myData, autoAction = false) {
                 for (let n of neighbors) {
                     if (n !== null && !visited.has(n)) {
                         const cellType = world[n] ? world[n].type : 'empty';
-                        // Идем только по пустым, либо если это цель
                         if (cellType === 'empty' || (autoAction && n === targetIndex)) { 
                             visited.add(n); queue.push([...currentPath, n]); 
                         }
