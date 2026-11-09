@@ -17,7 +17,8 @@ const questsList = [
 let currentQuestToSend = null;
 
 window.showQuests = () => {
-    const list = document.getElementById('quests-list'); list.innerHTML = '';
+    const list = document.getElementById('quests-list'); 
+    list.innerHTML = '';
     questsList.forEach(q => {
         list.innerHTML += `<div class="quest-item"><div>${q.name}</div><button class="shop-btn" onclick="openPlayerSelect('${q.id}', ${q.tickets})">+${q.tickets} 🎫</button></div>`;
     });
@@ -27,12 +28,16 @@ window.showQuests = () => {
 window.openPlayerSelect = (questId, tickets) => {
     currentQuestToSend = { id: questId, tickets: tickets };
     get(ref(db, 'players')).then((snap) => {
-        const players = snap.val(); const list = document.getElementById('player-select-list'); list.innerHTML = '';
+        const players = snap.val(); 
+        const list = document.getElementById('player-select-list'); 
+        list.innerHTML = '';
         let found = false;
+        
         for (let key in players) {
             if (key !== window.game.playerName) {
                 found = true;
-                list.innerHTML += `<div class="inv-item"><div>${key}</div><button class="shop-btn" onclick="sendQuestToPlayer('${key}')">Отправить</button></div>`;
+                // Принудительно делаем кнопку рабочей
+                list.innerHTML += `<div class="inv-item"><div>${key}</div><button type="button" class="shop-btn" onclick="window.sendQuestToPlayer('${key}')">Отправить</button></div>`;
             }
         }
         if (!found) list.innerHTML = '<p style="text-align:center;">Других игроков нет</p>';
@@ -43,13 +48,30 @@ window.openPlayerSelect = (questId, tickets) => {
 
 window.sendQuestToPlayer = (targetPlayer) => {
     if (!currentQuestToSend) return;
+    
+    // Отправляем данные в базу
     const newQuestRef = ref(db, `players/${targetPlayer}/quests`).push();
-    set(newQuestRef, { questId: currentQuestToSend.id, tickets: currentQuestToSend.tickets, from: window.game.playerName });
-    window.showNotification(`Задание отправлено игроку ${targetPlayer}!`, 'gift');
-    window.closeSelectPlayer();
+    set(newQuestRef, { 
+        questId: currentQuestToSend.id, 
+        tickets: currentQuestToSend.tickets, 
+        from: window.game.playerName 
+    }).then(() => {
+        // Этот код сработает ТОЛЬКО если запись в базе прошла успешно
+        window.showNotification(`Задание отправлено игроку ${targetPlayer}!`, 'gift');
+        window.closeSelectPlayer();
+    }).catch((error) => {
+        // Если произошла ошибка - покажем её
+        console.error("Ошибка отправки:", error);
+        alert("Ошибка при отправке: " + error.message);
+        window.closeSelectPlayer();
+    });
 };
 
-window.closeSelectPlayer = () => { document.getElementById('select-player-modal').style.display = 'none'; currentQuestToSend = null; };
+window.closeSelectPlayer = () => { 
+    document.getElementById('select-player-modal').style.display = 'none'; 
+    currentQuestToSend = null; 
+};
+
 window.closeQuests = () => document.getElementById('quests-modal').style.display = 'none';
 
 export { questsList };
