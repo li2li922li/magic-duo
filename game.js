@@ -53,14 +53,12 @@ window.askGiftAction = function(targetIndex, gift, myData) {
             for (let key in players) if (key !== window.game.playerName) partner = key;
             
             if (partner) { 
-                // Отправляем подарок партнеру
                 const giftRef = ref(db, `players/${partner}/gifts`).push();
                 set(giftRef, { item: gift, from: window.game.playerName }); 
                 if (window.showNotification) {
                     window.showNotification(`Ты умничка! Подарок ${gift} отправлен игроку ${partner}. Это учтено в твоей карме! 💖`, 'gift'); 
                 }
             } else {
-                // Если партнера нет - продаем
                 update(ref(db, 'players/' + window.game.playerName), { crystals: (myData.crystals || 0) + 10 });
                 if (window.showNotification) window.showNotification("Партнер не найден. Продано за 10 💎", 'crystal');
             }
@@ -80,7 +78,6 @@ onValue(ref(db, `players/${window.game.playerName}/gifts`), (snap) => {
     }
 });
 
-// --- БОЙ ---
 window.openBattle = function(index, monsterType, myData) {
     const info = monsterDescriptions[monsterType] || { name: 'Неизвестный', desc: '...', hp: 10, magic: '...' };
     currentBattle = { targetIndex: index, monsterHp: info.hp, monsterMaxHp: info.hp, monsterType: monsterType, monsterName: info.name, magic: info.magic, previousPos: myData.position };
