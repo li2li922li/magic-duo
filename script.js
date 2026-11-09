@@ -10,7 +10,6 @@ import './quest.js';
 window.addEventListener('load', () => {
     const { ref, set, get, db } = window.game;
     
-    // Имя уже введено в красивом окне (index.html) и сохранено в window.game.playerName
     const playerName = window.game.playerName;
     document.getElementById('player-name').textContent = playerName;
 
@@ -39,14 +38,28 @@ window.addEventListener('load', () => {
             }
             worldData[1].type = 'cashier';
             
-            // Ставим жителей на карту
             worldData[10] = { type: 'artiste', monsterType: null };
             worldData[50] = { type: 'sage', monsterType: null };
             
+            // Генерируем препятствия (150 штук разных типов)
+            const obstacleTypes = ['obstacle_wood', 'obstacle_rock', 'obstacle_stump'];
             let placedObs = 0;
             while (placedObs < 150) {
                 let idx = Math.floor(Math.random() * totalCells);
-                if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { worldData[idx].type = 'obstacle'; placedObs++; }
+                if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { 
+                    worldData[idx].type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)]; 
+                    placedObs++; 
+                }
+            }
+            
+            // Генерируем цветы (40 штук)
+            let placedFlowers = 0;
+            while (placedFlowers < 40) {
+                let idx = Math.floor(Math.random() * totalCells);
+                if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { 
+                    worldData[idx].type = 'flower'; 
+                    placedFlowers++; 
+                }
             }
             
             let placedChests = 0;
