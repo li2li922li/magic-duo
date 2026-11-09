@@ -31,17 +31,11 @@ window.renderWorld = function(worldData, playersData, myName, myData) {
             } else if (cellData.type === 'chest') {
                 cell.textContent = '🎁';
             } else if (cellData.type === 'monster') {
-                // Если монстр - вампир (🧛🏻‍♂️), ставим картинку
-                if (cellData.monsterType === '🧛🏻‍♂️') {
-                    cell.textContent = ''; // Убираем эмодзи
-                    cell.style.backgroundImage = "url('Vampires1_Attack_without_shadow.png')"; 
-                    cell.style.backgroundSize = 'cover';
-                    cell.style.backgroundPosition = 'center';
-                } else {
-                    // Остальные монстры остаются эмодзи
-                    cell.textContent = cellData.monsterType || '👹';
-                    cell.style.fontSize = '14px';
-                }
+                // Теперь картинка вампира будет у всех монстров
+                cell.textContent = ''; // Убираем эмодзи
+                cell.style.backgroundImage = "url('vampire.png')"; 
+                cell.style.backgroundSize = 'cover';
+                cell.style.backgroundPosition = 'center';
             } else if (cellData.type === 'cashier') {
                 cell.textContent = '🎪';
                 cell.style.fontSize = '14px';
