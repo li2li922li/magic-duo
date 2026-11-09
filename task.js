@@ -1,5 +1,5 @@
 // task.js
-const { db, ref, set, update, get, onValue } = window.game;
+const { db, ref, set, update, get, onValue, push } = window.game;
 
 const questsList = [
     { id: 'dishes', name: 'Помыть посуду', tickets: 1 }, { id: 'trash', name: 'Вынести мусор', tickets: 1 },
@@ -36,7 +36,6 @@ window.openPlayerSelect = (questId, tickets) => {
         for (let key in players) {
             if (key !== window.game.playerName) {
                 found = true;
-                // Принудительно делаем кнопку рабочей
                 list.innerHTML += `<div class="inv-item"><div>${key}</div><button type="button" class="shop-btn" onclick="window.sendQuestToPlayer('${key}')">Отправить</button></div>`;
             }
         }
@@ -50,18 +49,17 @@ window.sendQuestToPlayer = (targetPlayer) => {
     if (!currentQuestToSend) return;
     
     // Отправляем данные в базу
-    const newQuestRef = ref(db, `players/${targetPlayer}/quests`).push();
+    const newQuestRef = push(ref(db, `players/${targetPlayer}/quests`));
     set(newQuestRef, { 
         questId: currentQuestToSend.id, 
         tickets: currentQuestToSend.tickets, 
         from: window.game.playerName 
     }).then(() => {
-        // Этот код сработает ТОЛЬКО если запись в базе прошла успешно
+        // Этот код сработает, если запись в базе прошла успешно
         window.showNotification(`Задание отправлено игроку ${targetPlayer}!`, 'gift');
         window.closeSelectPlayer();
     }).catch((error) => {
-        // Если произошла ошибка - покажем её
-        console.error("Ошибка отправки:", error);
+        // Показываем ошибку, если она есть
         alert("Ошибка при отправке: " + error.message);
         window.closeSelectPlayer();
     });
