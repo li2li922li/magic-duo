@@ -54,7 +54,7 @@
 
     <div id="map"></div>
 
-       <div id="bottom-panel">
+    <div id="bottom-panel">
         <button onclick="showInventory()">🎒 Инвентарь</button>
         <button onclick="showCharacter()">🧙‍♂️ Персонаж</button>
         <button onclick="showQuests()">📜 Задания</button>
@@ -89,7 +89,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        // ВАЖНО: добавили push в window.game
         window.game = { db, ref, set, onValue, update, get, push, playerName: "" };
 
         const script = document.createElement('script');
