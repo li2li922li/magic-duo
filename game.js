@@ -3,7 +3,6 @@ const { db, ref, set, update, get, onValue } = window.game;
 let currentBattle = { targetIndex: null, monsterHp: 10, monsterMaxHp: 10, monsterType: '👹', monsterName: 'Монстр', previousPos: 0 };
 let turnInProgress = false;
 
-// Переменные для подарков
 let currentGift = null;
 let currentGiftIndex = null;
 
@@ -44,7 +43,6 @@ window.openChest = function(index, myData) {
 };
 
 window.askGiftAction = function(targetIndex, gift, myData) {
-    // Сохраняем подарок в глобальные переменные, чтобы не передавать через HTML
     currentGift = gift;
     currentGiftIndex = targetIndex;
 
@@ -62,7 +60,6 @@ window.askGiftAction = function(targetIndex, gift, myData) {
     `;
     document.body.appendChild(overlay);
     
-    // Продать
     document.getElementById('btn-sell').onclick = () => {
         update(ref(db, 'players/' + window.game.playerName), { crystals: (myData.crystals || 0) + 10 });
         update(ref(db, `world/${currentGiftIndex}`), { type: 'empty', monsterType: null });
@@ -70,7 +67,6 @@ window.askGiftAction = function(targetIndex, gift, myData) {
         overlay.remove();
     };
     
-    // Подарить
     document.getElementById('btn-gift').onclick = () => {
         overlay.remove(); 
         get(ref(db, 'players')).then((snap) => {
@@ -82,7 +78,7 @@ window.askGiftAction = function(targetIndex, gift, myData) {
             for (let key in players) {
                 if (key !== window.game.playerName) {
                     found = true;
-                    // Кнопка вызывает функцию БЕЗ аргументов, данные уже сохранены в переменных
+                    // Теперь кнопка передает ТОЛЬКО ключ игрока, без эмодзи
                     list.innerHTML += `<div class="inv-item"><div>${key}</div><button type="button" class="shop-btn" onclick="window.sendSavedGift('${key}')">Отправить</button></div>`;
                 }
             }
@@ -92,7 +88,6 @@ window.askGiftAction = function(targetIndex, gift, myData) {
     };
 };
 
-// Новая функция отправки (берет данные из глобальных переменных)
 window.sendSavedGift = (partner) => {
     if (!currentGift || !currentGiftIndex) return;
     const timestamp = Date.now();
@@ -114,7 +109,6 @@ window.sendSavedGift = (partner) => {
         update(ref(db, `world/${currentGiftIndex}`), { type: 'empty', monsterType: null });
         window.closeSelectPlayer();
         
-        // Сбрасываем переменные после отправки
         currentGift = null;
         currentGiftIndex = null;
         
@@ -134,7 +128,7 @@ onValue(ref(db, `players/${window.game.playerName}/gifts`), (snap) => {
     }
 });
 
-// --- БОЙ (без изменений) ---
+// --- БОЙ ---
 window.openBattle = function(index, monsterType, myData) {
     const info = monsterDescriptions[monsterType] || { name: 'Неизвестный', desc: '...', hp: 10, magic: '...' };
     currentBattle = { targetIndex: index, monsterHp: info.hp, monsterMaxHp: info.hp, monsterType: monsterType, monsterName: info.name, magic: info.magic, previousPos: myData.position };
