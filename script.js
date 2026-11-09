@@ -6,10 +6,9 @@ import './economy.js';
 import './game.js';
 import './level.js';
 
-window.addEventListener('load', async () => {
+window.addEventListener('load', () => {
     const { ref, set, get, db } = window.game;
     
-    // Ввод имени
     let playerName = prompt("Введите имя вашего волшебника:");
     if (!playerName) playerName = "Безымянный";
     playerName = playerName.trim();
@@ -18,10 +17,8 @@ window.addEventListener('load', async () => {
 
     const playerRef = ref(db, 'players/' + playerName);
     const worldRef = ref(db, 'world');
-
     const startingInventory = { axe: 10, arrows: 20, evasionPotion: 2, cookies: 3, milk: 2 };
 
-    // Создание игрока
     get(playerRef).then((snapshot) => {
         if (!snapshot.exists()) {
             set(playerRef, {
@@ -32,30 +29,38 @@ window.addEventListener('load', async () => {
         }
     });
 
-    // Генерация мира
     get(worldRef).then((snapshot) => {
         if (!snapshot.exists()) {
             const mapSize = 30;
             const worldData = {};
             const totalCells = mapSize * mapSize;
-            for (let i = 0; i < totalCells; i++) worldData[i] = { type: 'empty', monsterType: null };
+            for (let i = 0; i < totalCells; i++) {
+                worldData[i] = { type: 'empty', monsterType: null };
+            }
             worldData[1].type = 'cashier';
-
-            const placeRandom = (count, type, maxMonster = null) => {
-                let placed = 0;
-                while (placed < count) {
-                    const idx = Math.floor(Math.random() * totalCells);
-                    if (idx > 1 && worldData[idx].type === 'empty') {
-                        worldData[idx].type = type;
-                        if (type === 'monster' && maxMonster) worldData[idx].monsterType = maxMonster[Math.floor(Math.random() * maxMonster.length)];
-                        placed++;
-                    }
-                }
-            };
-            placeRandom(150, 'obstacle');
-            placeRandom(20, 'chest');
-            placeRandom(15, 'monster', ['👹', '👺', '🤖', '🎃', '🧙🏻', '🧌', '🧛🏻‍♂️']);
             
+            let placedObs = 0;
+            while (placedObs < 150) {
+                let idx = Math.floor(Math.random() * totalCells);
+                if (idx > 1 && worldData[idx].type === 'empty') { worldData[idx].type = 'obstacle'; placedObs++; }
+            }
+            
+            let placedChests = 0;
+            while (placedChests < 20) {
+                let idx = Math.floor(Math.random() * totalCells);
+                if (idx > 1 && worldData[idx].type === 'empty') { worldData[idx].type = 'chest'; placedChests++; }
+            }
+            
+            const monsters = ['👹', '👺', '🤖', '🎃', '🧙🏻', '🧌', '🧛🏻‍♂️'];
+            let placedMon = 0;
+            while (placedMon < 15) {
+                let idx = Math.floor(Math.random() * totalCells);
+                if (idx > 1 && worldData[idx].type === 'empty') { 
+                    worldData[idx].type = 'monster'; 
+                    worldData[idx].monsterType = monsters[Math.floor(Math.random() * monsters.length)]; 
+                    placedMon++; 
+                }
+            }
             set(worldRef, worldData);
         }
     });
