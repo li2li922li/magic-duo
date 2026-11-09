@@ -13,6 +13,7 @@ const cashierItems = [
     { id: 'trip', name: 'Поездка в другой город', price: 100, type: 'real' }
 ];
 
+// Всплывающие уведомления
 const notifContainer = document.createElement('div');
 notifContainer.style.cssText = `position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 1000; pointer-events: none; width: 90%; max-width: 400px;`;
 document.body.appendChild(notifContainer);
@@ -32,6 +33,7 @@ window.showNotification = function(text, type) {
     setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(20px)'; setTimeout(() => el.remove(), 300); }, 4000);
 };
 
+// ЛАВКА
 window.showShop = () => {
     get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
         const myData = snap.val();
@@ -59,6 +61,7 @@ window.buyItem = (itemId, price) => {
 };
 window.closeShop = () => document.getElementById('shop-modal').style.display = 'none';
 
+// КАССА
 window.showCashier = () => {
     get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
         const myData = snap.val();
@@ -98,12 +101,14 @@ window.confirmCashierPurchase = (id, name, price, type, value) => {
                 update(ref(db, 'players/' + window.game.playerName), { tickets: myData.tickets - price });
                 window.showNotification(`Куплено: ${name}!`, 'player');
                 
+                // УВЕДОМЛЕНИЕ ПАРТНЕРУ
                 get(ref(db, 'players')).then((pSnap) => {
                     const players = pSnap.val(); let partner = null;
                     for (let key in players) if (key !== window.game.playerName) partner = key;
                     if (partner) {
+                        // Создаем уникальный ключ для уведомления
                         const notifRef = ref(db, `players/${partner}/notifs`).push();
-                        set(notifRef, { text: `🎁 ${window.game.playerName} купил: ${name}. Выполни это!` });
+                        set(notifRef, { text: `${window.game.playerName} купил: ${name}. Выполни это!` });
                     }
                 });
             }
@@ -116,11 +121,13 @@ window.confirmCashierPurchase = (id, name, price, type, value) => {
 
 window.closeCashier = () => document.getElementById('cashier-modal').style.display = 'none';
 
+// Слушатель уведомлений (о покупках)
 onValue(ref(db, `players/${window.game.playerName}/notifs`), (snap) => {
     const notifs = snap.val();
     if (notifs) { 
         for (let key in notifs) { 
             window.showNotification(notifs[key].text, 'player'); 
+            set(ref(db, `players/${window.game.playerName}/notifs/${key}`), null); 
         } 
     }
 });
