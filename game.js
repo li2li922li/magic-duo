@@ -88,21 +88,28 @@ window.useItemInBattle = (type) => {
     });
 };
 
+// ВОЗВРАЩАЕМ РАЗБОР ЗАВАЛОВ
 window.cutObstacle = function(index, myData) {
     if (myData.inventory && myData.inventory.axe > 0) {
         const newInv = { ...myData.inventory, axe: myData.inventory.axe - 1 };
-        window.processXP(myData, Math.floor(Math.random() * 10) + 1);
+        const xpGain = Math.floor(Math.random() * 10) + 1;
+        // Начисляем опыт через level.js
+        if (window.processXP) {
+            window.processXP(myData, xpGain);
+        }
         update(ref(db, 'players/' + window.game.playerName), { inventory: newInv });
         update(ref(db, `world/${index}`), { type: 'empty', monsterType: null });
-        window.showNotification(`Завал разобран! Топор: ${newInv.axe}/10`, 'obstacle');
-    } else window.showNotification("Топор сломался!", 'damage');
+        window.showNotification(`Завал разобран! Топор: ${newInv.axe}/10. +${xpGain} XP`, 'obstacle');
+    } else {
+        window.showNotification("Топор сломался! Нужен новый.", 'damage');
+    }
 };
 
 window.openChest = function(index, myData) {
     const rand = Math.random();
     if (rand < 0.5) {
         const xpGain = Math.floor(Math.random() * 15) + 5;
-        window.processXP(myData, xpGain);
+        if (window.processXP) window.processXP(myData, xpGain);
         update(ref(db, 'players/' + window.game.playerName), { crystals: (myData.crystals || 0) + 5 });
         update(ref(db, `world/${index}`), { type: 'empty', monsterType: null });
         window.showNotification(`+5 кристаллов 💎 и +${xpGain} XP`, 'crystal');
