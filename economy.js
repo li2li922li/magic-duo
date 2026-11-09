@@ -13,7 +13,6 @@ const cashierItems = [
     { id: 'trip', name: 'Поездка в другой город', price: 100, type: 'real' }
 ];
 
-// Всплывающие уведомления
 const notifContainer = document.createElement('div');
 notifContainer.style.cssText = `position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 1000; pointer-events: none; width: 90%; max-width: 400px;`;
 document.body.appendChild(notifContainer);
@@ -33,7 +32,6 @@ window.showNotification = function(text, type) {
     setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(20px)'; setTimeout(() => el.remove(), 300); }, 4000);
 };
 
-// ЛАВКА
 window.showShop = () => {
     get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
         const myData = snap.val();
@@ -61,7 +59,6 @@ window.buyItem = (itemId, price) => {
 };
 window.closeShop = () => document.getElementById('shop-modal').style.display = 'none';
 
-// КАССА
 window.showCashier = () => {
     get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
         const myData = snap.val();
@@ -97,24 +94,56 @@ window.confirmCashierPurchase = (id, name, price, type, value) => {
             if (type === 'crystals') {
                 update(ref(db, 'players/' + window.game.playerName), { tickets: myData.tickets - price, crystals: (myData.crystals || 0) + value });
                 window.showNotification(`Обменяно! +${value} 💎`, 'crystal');
+                overlay.remove();
+                window.showCashier();
             } else {
-                update(ref(db, 'players/' + window.game.playerName), { tickets: myData.tickets - price });
-                window.showNotification(`Куплено: ${name}!`, 'player');
-                
-                // ИСПРАВЛЕНО: Отправка уведомления партнеру
-                get(ref(db, 'players')).then((pSnap) => {
-                    const players = pSnap.val(); let partner = null;
-                    for (let key in players) if (key !== window.game.playerName) partner = key;
-                    if (partner) {
-                        const notifRef = push(ref(db, `players/${partner}/notifs`));
-                        set(notifRef, { text: `🎁 ${window.game.playerName} купил: ${name}. Выполни это!` });
-                    }
-                });
+                // Вместо прямого списания и отправки, показываем список игроков
+                overlay.remove();
+                window.closeCashier();
+                window.showPlayerSelectForCashier(name, price);
             }
-            overlay.remove();
-            window.showCashier(); 
         };
         document.getElementById('btn-buy-no').onclick = () => overlay.remove();
+    });
+};
+
+// Новая функция для выбора игрока при покупке в кассе
+window.showPlayerSelectForCashier = (itemName, price) => {
+    get(ref(db, 'players')).then((snap) => {
+        const players = snap.val();
+        const list = document.getElementById('player-select-list');
+        list.innerHTML = '';
+        let found = false;
+        
+        for (let key in players) {
+            if (key !== window.game.playerName) {
+                found = true;
+                list.innerHTML += `<div class="inv-item"><div>${key}</div><button type="button" class="shop-btn" onclick="window.sendCashierGiftToPlayer('${key}', '${itemName}', ${price})">Отправить</button></div>`;
+            }
+        }
+        if (!found) list.innerHTML = '<p style="text-align:center;">Других игроков нет</p>';
+        
+        // Меняем заголовок окна, чтобы было понятно, что это касса
+        document.querySelector('#select-player-modal h2').textContent = 'Кому отправить покупку?';
+        document.getElementById('select-player-modal').style.display = 'flex';
+    });
+};
+
+// Отправка покупки из кассы конкретному игроку
+window.sendCashierGiftToPlayer = (targetPlayer, itemName, price) => {
+    get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
+        const myData = snap.val();
+        if ((myData.tickets || 0) < price) { window.showNotification("Недостаточно билетиков!", 'damage'); return; }
+        
+        // Списываем билетики у покупателя
+        update(ref(db, 'players/' + window.game.playerName), { tickets: myData.tickets - price });
+        
+        // Отправляем уведомление партнеру
+        const notifRef = push(ref(db, `players/${targetPlayer}/notifs`));
+        set(notifRef, { text: `🎁 ${window.game.playerName} купил: ${itemName}. Выполни это!` });
+        
+        window.showNotification(`Покупка отправлена игроку ${targetPlayer}!`, 'player');
+        window.closeSelectPlayer();
     });
 };
 
