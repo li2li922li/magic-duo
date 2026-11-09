@@ -10,11 +10,9 @@ import './quest.js';
 window.addEventListener('load', () => {
     const { ref, set, get, db } = window.game;
     
-    let playerName = prompt("Введите имя вашего волшебника:");
-    if (!playerName) playerName = "Безымянный";
-    playerName = playerName.trim();
+    // Имя уже введено в красивом окне (index.html) и сохранено в window.game.playerName
+    const playerName = window.game.playerName;
     document.getElementById('player-name').textContent = playerName;
-    window.game.playerName = playerName;
 
     const playerRef = ref(db, 'players/' + playerName);
     const worldRef = ref(db, 'world');
