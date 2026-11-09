@@ -43,7 +43,7 @@ window.showCharacter = () => {
                     }
                 }
 
-                // Выводим уведомления о покупках (не удаляем их сразу, пусть висят)
+                // Выводим уведомления (покупки, подарки)
                 if (notifs) {
                     hasNotifs = true;
                     for (let key in notifs) {
@@ -68,7 +68,7 @@ window.confirmQuest = (key, from, tickets) => {
 
 window.rejectQuest = (key) => { set(ref(db, `players/${window.game.playerName}/quests/${key}`), null); window.showCharacter(); };
 
-// Функция, чтобы убрать уведомление о покупке после прочтения
+// Функция, чтобы убрать уведомление вручную (по крестику)
 window.clearNotif = (key) => {
     set(ref(db, `players/${window.game.playerName}/notifs/${key}`), null);
     window.showCharacter();
