@@ -4,7 +4,6 @@ const mapContainer = document.getElementById('map');
 
 window.renderWorld = function(worldData, playersData, myName, myData) {
     try {
-        console.log("Отрисовка карты запущена. Данные мира:", worldData);
         if (!mapContainer) return;
         mapContainer.innerHTML = '';
         
@@ -141,19 +140,8 @@ window.startPathfinding = function(targetIndex, myData, autoAction = false) {
     }
 };
 
-// --- ВОТ ЭТОТ КУСОК БЫЛ ПОТЕРЯН ---
+// --- СЛУШАТЕЛЬ БАЗЫ ДАННЫХ (ИСПРАВЛЕНО: одно объявление) ---
 const { ref, onValue, db } = window.game;
-
-onValue(ref(db, 'world'), (worldSnap) => {
-    onValue(ref(db, 'players'), (playersSnap) => {
-        const playersData = playersSnap.val();
-        const myData = playersData ? playersData[window.game.playerName] : null;
-        window.renderWorld(worldSnap.val(), playersData, window.game.playerName, myData);
-    });
-});
-// В самом низу map.js
-const { db } = window.game;
-const { ref, onValue } = window.game;
 
 onValue(ref(db, 'world'), (worldSnap) => {
     onValue(ref(db, 'players'), (playersSnap) => {
