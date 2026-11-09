@@ -1,5 +1,5 @@
 // economy.js
-const { db, ref, set, update, get, onValue, push } = window.game;
+const { db, ref, set, update, get, onValue } = window.game;
 
 const cashierItems = [
     { id: 'crystals_10', name: 'Обменять 1 билет на 10 кристаллов', price: 1, type: 'crystals', value: 10 },
@@ -33,7 +33,7 @@ window.showNotification = function(text, type) {
     setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(20px)'; setTimeout(() => el.remove(), 300); }, 4000);
 };
 
-// ЛАВКА (за кристаллы)
+// ЛАВКА
 window.showShop = () => {
     get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
         const myData = snap.val();
@@ -61,7 +61,7 @@ window.buyItem = (itemId, price) => {
 };
 window.closeShop = () => document.getElementById('shop-modal').style.display = 'none';
 
-// КАССА (за билетики)
+// КАССА
 window.showCashier = () => {
     get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
         const myData = snap.val();
@@ -74,13 +74,11 @@ window.showCashier = () => {
     });
 };
 
-// Окно подтверждения покупки
 window.confirmCashierPurchase = (id, name, price, type, value) => {
     get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
         const myData = snap.val();
         if ((myData.tickets || 0) < price) { window.showNotification("Недостаточно билетиков!", 'damage'); return; }
         
-        // Создаем окно подтверждения
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay'; overlay.style.display = 'flex';
         overlay.innerHTML = `
@@ -96,7 +94,6 @@ window.confirmCashierPurchase = (id, name, price, type, value) => {
         document.body.appendChild(overlay);
 
         document.getElementById('btn-buy-yes').onclick = () => {
-            // Списываем билетики
             if (type === 'crystals') {
                 update(ref(db, 'players/' + window.game.playerName), { tickets: myData.tickets - price, crystals: (myData.crystals || 0) + value });
                 window.showNotification(`Обменяно! +${value} 💎`, 'crystal');
@@ -104,18 +101,19 @@ window.confirmCashierPurchase = (id, name, price, type, value) => {
                 update(ref(db, 'players/' + window.game.playerName), { tickets: myData.tickets - price });
                 window.showNotification(`Куплено: ${name}!`, 'player');
                 
-                // Отправляем уведомление партнеру
+                // УВЕДОМЛЕНИЕ ПАРТНЕРУ
                 get(ref(db, 'players')).then((pSnap) => {
                     const players = pSnap.val(); let partner = null;
                     for (let key in players) if (key !== window.game.playerName) partner = key;
                     if (partner) {
-                        const notifRef = window.game.push(ref(db, `players/${partner}/notifs`));
-                        window.game.set(notifRef, { text: `${window.game.playerName} купил: ${name}. Выполни это!` });
+                        // Создаем уникальный ключ для уведомления
+                        const notifRef = ref(db, `players/${partner}/notifs`).push();
+                        set(notifRef, { text: `${window.game.playerName} купил: ${name}. Выполни это!` });
                     }
                 });
             }
             overlay.remove();
-            window.showCashier(); // Обновить окно кассы
+            window.showCashier(); 
         };
         document.getElementById('btn-buy-no').onclick = () => overlay.remove();
     });
