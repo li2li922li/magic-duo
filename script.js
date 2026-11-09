@@ -34,40 +34,45 @@ window.addEventListener('load', () => {
             const worldData = {};
             const totalCells = mapSize * mapSize;
             for (let i = 0; i < totalCells; i++) {
-                worldData[i] = { type: 'empty', monsterType: null };
+                worldData[i] = { type: 'empty', monsterType: null, obstacleType: null };
             }
             worldData[1].type = 'cashier';
             
-            worldData[10] = { type: 'artiste', monsterType: null };
-            worldData[50] = { type: 'sage', monsterType: null };
+            worldData[10] = { type: 'artiste', monsterType: null, obstacleType: null };
+            worldData[50] = { type: 'sage', monsterType: null, obstacleType: null };
             
-            // Генерируем препятствия (150 штук разных типов)
-            const obstacleTypes = ['obstacle_wood', 'obstacle_rock', 'obstacle_stump'];
+            // Завалы
+            const obstacles = ['🌲', '🌳', '🪾', '🪨', '🛘'];
             let placedObs = 0;
             while (placedObs < 150) {
                 let idx = Math.floor(Math.random() * totalCells);
                 if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { 
-                    worldData[idx].type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)]; 
+                    worldData[idx].type = 'obstacle'; 
+                    worldData[idx].obstacleType = obstacles[Math.floor(Math.random() * obstacles.length)];
                     placedObs++; 
                 }
             }
             
-            // Генерируем цветы (40 штук)
+            // Цветы
+            const flowers = ['🌼', '🌸', '🌺', '🌻', '🍀'];
             let placedFlowers = 0;
             while (placedFlowers < 40) {
                 let idx = Math.floor(Math.random() * totalCells);
                 if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { 
                     worldData[idx].type = 'flower'; 
+                    worldData[idx].obstacleType = flowers[Math.floor(Math.random() * flowers.length)];
                     placedFlowers++; 
                 }
             }
             
+            // Сундуки
             let placedChests = 0;
             while (placedChests < 20) {
                 let idx = Math.floor(Math.random() * totalCells);
                 if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { worldData[idx].type = 'chest'; placedChests++; }
             }
             
+            // Монстры
             const monsters = ['👹', '👺', '🤖', '🎃', '🧙🏻', '🧌', '🧛🏻‍♂️'];
             let placedMon = 0;
             while (placedMon < 15) {
