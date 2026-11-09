@@ -28,18 +28,24 @@ window.addEventListener('load', () => {
         }
     });
 
+    // Генерация мира (исправлено: используем пустые строки вместо null)
     get(worldRef).then((snapshot) => {
         if (!snapshot.exists()) {
             const mapSize = 30;
             const worldData = {};
             const totalCells = mapSize * mapSize;
-            for (let i = 0; i < totalCells; i++) {
-                worldData[i] = { type: 'empty', monsterType: null, obstacleType: null };
-            }
-            worldData[1].type = 'cashier';
             
-            worldData[10] = { type: 'artiste', monsterType: null, obstacleType: null };
-            worldData[50] = { type: 'sage', monsterType: null, obstacleType: null };
+            // Сначала все клетки пустые
+            for (let i = 0; i < totalCells; i++) {
+                worldData[i] = { type: 'empty', monsterType: '', obstacleType: '' };
+            }
+            
+            // Касса
+            worldData[1] = { type: 'cashier', monsterType: '', obstacleType: '' };
+            
+            // Жители
+            worldData[10] = { type: 'artiste', monsterType: '', obstacleType: '' };
+            worldData[50] = { type: 'sage', monsterType: '', obstacleType: '' };
             
             // Завалы
             const obstacles = ['🌲', '🌳', '🪾', '🪨', '🛘'];
@@ -47,8 +53,7 @@ window.addEventListener('load', () => {
             while (placedObs < 150) {
                 let idx = Math.floor(Math.random() * totalCells);
                 if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { 
-                    worldData[idx].type = 'obstacle'; 
-                    worldData[idx].obstacleType = obstacles[Math.floor(Math.random() * obstacles.length)];
+                    worldData[idx] = { type: 'obstacle', monsterType: '', obstacleType: obstacles[Math.floor(Math.random() * obstacles.length)] };
                     placedObs++; 
                 }
             }
@@ -59,8 +64,7 @@ window.addEventListener('load', () => {
             while (placedFlowers < 40) {
                 let idx = Math.floor(Math.random() * totalCells);
                 if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { 
-                    worldData[idx].type = 'flower'; 
-                    worldData[idx].obstacleType = flowers[Math.floor(Math.random() * flowers.length)];
+                    worldData[idx] = { type: 'flower', monsterType: '', obstacleType: flowers[Math.floor(Math.random() * flowers.length)] };
                     placedFlowers++; 
                 }
             }
@@ -69,7 +73,10 @@ window.addEventListener('load', () => {
             let placedChests = 0;
             while (placedChests < 20) {
                 let idx = Math.floor(Math.random() * totalCells);
-                if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { worldData[idx].type = 'chest'; placedChests++; }
+                if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { 
+                    worldData[idx] = { type: 'chest', monsterType: '', obstacleType: '' };
+                    placedChests++; 
+                }
             }
             
             // Монстры
@@ -78,12 +85,14 @@ window.addEventListener('load', () => {
             while (placedMon < 15) {
                 let idx = Math.floor(Math.random() * totalCells);
                 if (idx > 1 && idx !== 10 && idx !== 50 && worldData[idx].type === 'empty') { 
-                    worldData[idx].type = 'monster'; 
-                    worldData[idx].monsterType = monsters[Math.floor(Math.random() * monsters.length)]; 
+                    worldData[idx] = { type: 'monster', monsterType: monsters[Math.floor(Math.random() * monsters.length)], obstacleType: '' };
                     placedMon++; 
                 }
             }
-            set(worldRef, worldData);
+            
+            set(worldRef, worldData).then(() => {
+                console.log("Мир успешно создан!");
+            });
         }
     });
 });
