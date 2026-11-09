@@ -9,7 +9,6 @@ import './level.js';
 window.addEventListener('load', async () => {
     const { ref, set, get, db } = window.game;
     
-    // Ввод имени
     let playerName = prompt("Введите имя вашего волшебника:");
     if (!playerName) playerName = "Безымянный";
     playerName = playerName.trim();
@@ -21,7 +20,6 @@ window.addEventListener('load', async () => {
 
     const startingInventory = { axe: 10, arrows: 20, evasionPotion: 2, cookies: 3, milk: 2 };
 
-    // Создание игрока
     get(playerRef).then((snapshot) => {
         if (!snapshot.exists()) {
             set(playerRef, {
@@ -32,10 +30,8 @@ window.addEventListener('load', async () => {
         }
     });
 
-    // Генерация мира
     get(worldRef).then((snapshot) => {
         if (!snapshot.exists()) {
-            console.log("Создаем новый мир...");
             const mapSize = 30;
             const worldData = {};
             const totalCells = mapSize * mapSize;
@@ -56,22 +52,7 @@ window.addEventListener('load', async () => {
             placeRandom(150, 'obstacle');
             placeRandom(20, 'chest');
             placeRandom(15, 'monster', ['👹', '👺', '🤖', '🎃', '🧙🏻', '🧌', '🧛🏻‍♂️']);
-            
-            // Сохраняем мир в базу
-            set(worldRef, worldData).then(() => {
-                console.log("Мир сохранен! Принудительный вызов отрисовки...");
-                // Принудительно вызываем отрисовку (ждем, пока база отдаст данные)
-                setTimeout(() => {
-                    get(worldRef).then((s) => {
-                        get(ref(db, 'players')).then((p) => {
-                            if (window.renderWorld) {
-                                window.renderWorld(s.val(), p.val(), playerName, p.val()[playerName]);
-                            }
-                        });
-                    });
-                }, 500);
-            });
-        } else {
-            console.log("Мир уже существует. Отрисовка через слушатель map.js...");
+            set(worldRef, worldData);
         }
     });
+});
