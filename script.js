@@ -35,7 +35,6 @@ window.addEventListener('load', async () => {
     // Генерация мира
     get(worldRef).then((snapshot) => {
         if (!snapshot.exists()) {
-            console.log("Создаем новый мир...");
             const mapSize = 30;
             const worldData = {};
             const totalCells = mapSize * mapSize;
@@ -58,8 +57,6 @@ window.addEventListener('load', async () => {
             placeRandom(15, 'monster', ['👹', '👺', '🤖', '🎃', '🧙🏻', '🧌', '🧛🏻‍♂️']);
             
             set(worldRef, worldData);
-        } else {
-            console.log("Мир уже существует.");
         }
     });
 });
