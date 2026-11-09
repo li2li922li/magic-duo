@@ -20,13 +20,13 @@ window.renderWorld = function(worldData, playersData, myName, myData) {
             cell.id = `cell-${i}`;
             const cellData = (worldData && worldData[i]) ? worldData[i] : {type: 'empty'};
             
-            if (cellData.type === 'obstacle') cell.textContent = cellData.obstacleType || '🌲';
+            if (cellData.type === 'obstacle') cell.textContent = '🌲';
             else if (cellData.type === 'chest') cell.textContent = '🎁';
             else if (cellData.type === 'monster') cell.textContent = cellData.monsterType || '👹';
             else if (cellData.type === 'cashier') cell.textContent = '🎪';
             else if (cellData.type === 'artiste') cell.textContent = '🤹🏻‍♀️';
             else if (cellData.type === 'sage') cell.textContent = '🧘🏼‍♂️';
-            else if (cellData.type === 'flower') cell.textContent = cellData.obstacleType || '🌸';
+            else if (cellData.type === 'flower') cell.textContent = cellData.flowerType;
             else cell.textContent = '·';
             
             cell.addEventListener('click', () => window.attemptMove(i, cellData, myData));
@@ -92,7 +92,8 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
             if (cellData.type === 'obstacle') window.cutObstacle(targetIndex, myData);
             if (cellData.type === 'chest') window.openChest(targetIndex, myData);
             if (cellData.type === 'cashier') window.showCashier();
-            if (cellData.type === 'flower') window.collectFlower(targetIndex, myData);
+            if (cellData.type === 'flower') window.collectFlower(targetIndex, cellData, myData);
+            
             if (cellData.type === 'artiste') {
                 get(ref(db, `players/${window.game.playerName}/questsProgress/artiste`)).then((snap) => {
                     const progress = snap.val();
@@ -136,7 +137,7 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
             if (cellData.type === 'chest') window.openChest(targetIndex, myData);
             if (cellData.type === 'cashier') window.showCashier();
             if (cellData.type === 'obstacle') window.cutObstacle(targetIndex, myData);
-            if (cellData.type === 'flower') window.collectFlower(targetIndex, myData);
+            if (cellData.type === 'flower') window.collectFlower(targetIndex, cellData, myData);
             if (cellData.type === 'artiste' || cellData.type === 'sage') {
                 if (cellData.type === 'artiste') {
                     get(ref(db, `players/${window.game.playerName}/questsProgress/artiste`)).then((snap) => {
@@ -210,6 +211,7 @@ window.startPathfinding = function(targetIndex, myData, autoAction = false) {
     }
 };
 
+// --- СЛУШАТЕЛЬ ---
 const { ref, onValue, db } = window.game;
 
 onValue(ref(db, 'world'), (worldSnap) => {
