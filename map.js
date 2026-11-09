@@ -24,6 +24,8 @@ window.renderWorld = function(worldData, playersData, myName, myData) {
             else if (cellData.type === 'chest') cell.textContent = '🎁';
             else if (cellData.type === 'monster') cell.textContent = cellData.monsterType || '👹';
             else if (cellData.type === 'cashier') cell.textContent = '🎪';
+            else if (cellData.type === 'artiste') cell.textContent = '🤹🏻‍♀️';
+            else if (cellData.type === 'sage') cell.textContent = '🧘🏼‍♂️';
             else cell.textContent = '·';
             
             cell.addEventListener('click', () => window.attemptMove(i, cellData, myData));
@@ -47,9 +49,7 @@ window.renderWorld = function(worldData, playersData, myName, myData) {
     }
 };
 
-// Новая функция для кастомного окошка "Побежать?"
 window.showRunPrompt = function(targetIndex, myData, isObstacle = false) {
-    // Удаляем старое, если есть
     const oldPrompt = document.getElementById('run-prompt');
     if (oldPrompt) oldPrompt.remove();
 
@@ -82,15 +82,34 @@ window.showRunPrompt = function(targetIndex, myData, isObstacle = false) {
 
 window.attemptMove = async function(targetIndex, cellData, myData) {
     try {
-        const { ref, update, db } = window.game;
+        const { ref, update, db, get } = window.game;
         if (!myData) return;
         const playerRef = ref(db, 'players/' + window.game.playerName);
         
+        // Если мы уже на этой клетке
         if (myData.position === targetIndex) {
             if (cellData.type === 'monster') window.openBattle(targetIndex, cellData.monsterType, myData);
             if (cellData.type === 'obstacle') window.cutObstacle(targetIndex, myData);
             if (cellData.type === 'chest') window.openChest(targetIndex, myData);
             if (cellData.type === 'cashier') window.showCashier();
+            
+            // Обработка жителей
+            if (cellData.type === 'artiste') {
+                get(ref(db, `players/${window.game.playerName}/questsProgress/artiste`)).then((snap) => {
+                    const progress = snap.val();
+                    const stageIndex = progress ? progress.stage : 0;
+                    if (stageIndex < 5) window.openQuest('artiste', stageIndex, myData);
+                    else window.showNotification("Я уже всё рассказал. Спасибо тебе!", 'player');
+                });
+            }
+            if (cellData.type === 'sage') {
+                get(ref(db, `players/${window.game.playerName}/questsProgress/sage`)).then((snap) => {
+                    const progress = snap.val();
+                    const stageIndex = progress ? progress.stage : 0;
+                    if (stageIndex < 3) window.openQuest('sage', stageIndex, myData);
+                    else window.showNotification("Вода всегда найдёт путь. И ты тоже.", 'player');
+                });
+            }
             return;
         }
 
@@ -98,6 +117,7 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
         const row = Math.floor(currentPos / mapSize), col = currentPos % mapSize;
         const targetRow = Math.floor(targetIndex / mapSize), targetCol = targetIndex % mapSize;
         
+        // Если клетка далеко
         if (Math.abs(row - targetRow) > 1 || Math.abs(col - targetCol) > 1) {
             if (cellData.type === 'obstacle') {
                 window.showRunPrompt(targetIndex, myData, true);
@@ -107,17 +127,38 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
             return;
         }
 
+        // Если клетка соседняя
         if (cellData.type === 'obstacle' && (!myData.inventory || myData.inventory.axe <= 0)) { 
             if(window.showNotification) window.showNotification("Нужен топор! Купите в лавке.", 'damage'); 
             return; 
         }
         if (cellData.type === 'monster') { window.openBattle(targetIndex, cellData.monsterType, myData); return; }
         
-        if (cellData.type === 'empty' || cellData.type === 'chest' || cellData.type === 'cashier' || cellData.type === 'obstacle') {
+        // Двигаемся (на пустые, сундуки, кассу, жителей или завал)
+        if (cellData.type === 'empty' || cellData.type === 'chest' || cellData.type === 'cashier' || cellData.type === 'obstacle' || cellData.type === 'artiste' || cellData.type === 'sage') {
             update(playerRef, { position: targetIndex });
             if (cellData.type === 'chest') window.openChest(targetIndex, myData);
             if (cellData.type === 'cashier') window.showCashier();
             if (cellData.type === 'obstacle') window.cutObstacle(targetIndex, myData);
+            if (cellData.type === 'artiste' || cellData.type === 'sage') {
+                // Если наступили на клетку с жителем - сразу открываем квест
+                if (cellData.type === 'artiste') {
+                    get(ref(db, `players/${window.game.playerName}/questsProgress/artiste`)).then((snap) => {
+                        const progress = snap.val();
+                        const stageIndex = progress ? progress.stage : 0;
+                        if (stageIndex < 5) window.openQuest('artiste', stageIndex, myData);
+                        else window.showNotification("Я уже всё рассказал. Спасибо тебе!", 'player');
+                    });
+                }
+                if (cellData.type === 'sage') {
+                    get(ref(db, `players/${window.game.playerName}/questsProgress/sage`)).then((snap) => {
+                        const progress = snap.val();
+                        const stageIndex = progress ? progress.stage : 0;
+                        if (stageIndex < 3) window.openQuest('sage', stageIndex, myData);
+                        else window.showNotification("Вода всегда найдёт путь. И ты тоже.", 'player');
+                    });
+                }
+            }
         }
     } catch (e) {
         console.error("ОШИБКА ПРИ ДВИЖЕНИИ:", e);
@@ -145,6 +186,7 @@ window.startPathfinding = function(targetIndex, myData, autoAction = false) {
                 for (let n of neighbors) {
                     if (n !== null && !visited.has(n)) {
                         const cellType = world[n] ? world[n].type : 'empty';
+                        // Идем только по пустым, либо если это цель
                         if (cellType === 'empty' || (autoAction && n === targetIndex)) { 
                             visited.add(n); queue.push([...currentPath, n]); 
                         }
