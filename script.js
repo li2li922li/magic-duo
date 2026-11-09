@@ -4,7 +4,7 @@ window.addEventListener('load', () => {
     const mapContainer = document.getElementById('map');
     mapContainer.innerHTML = '';
 
-    // --- УВЕДОМЛЕНИЯ ---
+    // --- УВЕДОМЛЕНИЯ (ВСПЛЫВАЮЩИЕ) ---
     const notifContainer = document.createElement('div');
     notifContainer.style.cssText = `position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 1000; pointer-events: none; width: 90%; max-width: 400px;`;
     document.body.appendChild(notifContainer);
@@ -18,7 +18,6 @@ window.addEventListener('load', () => {
         if (type === 'damage') { bgColor = '#ff6b6b'; borderColor = '#d13c3c'; }
         if (type === 'player') { bgColor = '#ffb6c1'; borderColor = '#d17b8a'; }
         if (type === 'gift') { bgColor = '#dda0dd'; borderColor = '#9370db'; }
-
         el.style.cssText = `background: ${bgColor}; color: #111; padding: 10px 15px; border-radius: 5px; border: 2px solid ${borderColor}; font-weight: bold; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.5); opacity: 0; transition: all 0.3s ease; transform: translateY(20px); font-size: 14px;`;
         notifContainer.appendChild(el);
         setTimeout(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; }, 10);
@@ -36,7 +35,6 @@ window.addEventListener('load', () => {
     const startingInventory = { axe: 10, arrows: 20, evasionPotion: 2, cookies: 3, milk: 2 };
     const avatarOptions = ['🥷🏻', '🧚🏻‍♀️', '🧚🏻', '🧚🏻‍♂️', '🧜🏻‍♀️', '🧜🏻‍♂️', '👸🏻', '🤴🏻'];
 
-    // Данные (сокращенно, чтобы не занимать много места, они идентичны прошлым)
     const levelRewards = { /* ... твои награды ... */ };
     const questsList = [{ id: 'dishes', name: 'Помыть посуду', tickets: 1 }, { id: 'trash', name: 'Вынести мусор', tickets: 1 }, { id: 'package', name: 'Забрать посылку', tickets: 1 }, { id: 'zhkh_transfer', name: 'Передать показания ЖКХ', tickets: 1 }, { id: 'zhkh_pay', name: 'Оплатить ЖКХ', tickets: 1 }, { id: 'laundry_start', name: 'Запустить стирку', tickets: 2 }, { id: 'laundry_hang', name: 'Развесить белье', tickets: 1 }, { id: 'laundry_fold', name: 'Разобрать белье', tickets: 1 }, { id: 'bed', name: 'Поменять постельное белье', tickets: 2 }, { id: 'dust', name: 'Протереть пыль в 1 комнате', tickets: 3 }, { id: 'floors', name: 'Помыть полы в 1 комнате', tickets: 3 }, { id: 'groceries', name: 'Закупиться продуктами', tickets: 3 }, { id: 'lunch', name: 'Приготовить обед', tickets: 5 }, { id: 'dinner', name: 'Приготовить ужин', tickets: 5 }, { id: 'massage', name: 'Сделать массаж', tickets: 5 }, { id: 'flowers', name: 'Подарить цветы просто так', tickets: 10 }, { id: 'gift', name: 'Подарить подарок просто так', tickets: 10 }, { id: 'bake', name: 'Испечь пирожки/торт', tickets: 20 }, { id: 'table', name: 'Убрать со стола', tickets: 1 }, { id: 'water_flowers', name: 'Полить цветы', tickets: 2 }].sort((a, b) => a.tickets - b.tickets);
     const cashierItems = [{ id: 'crystals_10', name: 'Обменять 1 билет на 10 кристаллов', price: 1, type: 'crystals', value: 10 }, { id: 'delay', name: 'Отсрочка домашнего дела на 1 день', price: 1, type: 'effect' }, { id: 'walk', name: 'Прогулка', price: 5, type: 'real' }, { id: 'massage', name: 'Получить массаж', price: 5, type: 'real' }, { id: 'beer', name: 'Пиво до 1л (1 раз в день)', price: 5, type: 'real' }, { id: 'hookah', name: 'Поход в кальянную', price: 10, type: 'real' }, { id: 'cinema', name: 'Поход в кино', price: 15, type: 'real' }, { id: 'sushi', name: 'Заказ роллов/суши', price: 15, type: 'real' }, { id: 'pizza', name: 'Заказ пиццы', price: 15, type: 'real' }, { id: 'restaurant', name: 'Поход в ресторан', price: 20, type: 'real' }, { id: 'lazy_day', name: 'Целый день ничего неделания', price: 10, type: 'real' }, { id: 'small_gift', name: 'Небольшой недорогой подарочек', price: 10, type: 'real' }, { id: 'romantic_dinner', name: 'Романтический ужин', price: 10, type: 'real' }, { id: 'unusual_date', name: 'Необычное свидание', price: 50, type: 'real' }, { id: 'trip', name: 'Поездка в другой город', price: 100, type: 'real' }];
@@ -65,9 +63,7 @@ window.addEventListener('load', () => {
                     }
                 }
             };
-            placeRandom(150, 'obstacle');
-            placeRandom(20, 'chest');
-            placeRandom(15, 'monster', ['👹', '👺', '🤖', '🎃', '🧙🏻', '🧌', '🧛🏻‍♂️']);
+            placeRandom(150, 'obstacle'); placeRandom(20, 'chest'); placeRandom(15, 'monster', ['👹', '👺', '🤖', '🎃', '🧙🏻', '🧌', '🧛🏻‍♂️']);
             set(worldRef, worldData);
         }
     });
@@ -353,7 +349,7 @@ window.addEventListener('load', () => {
     };
     window.closeInventory = () => document.getElementById('inventory-modal').style.display = 'none';
 
-    // --- ПЕРСОНАЖ (С УВЕДОМЛЕНИЯМИ) ---
+    // --- ПЕРСОНАЖ ---
     window.showCharacter = () => {
         get(playerRef).then((snap) => {
             const myData = snap.val();
@@ -437,6 +433,7 @@ window.addEventListener('load', () => {
         document.getElementById('quests-modal').style.display = 'flex';
     };
 
+    // Открываем список игроков для отправки
     window.openPlayerSelect = (questId, tickets) => {
         currentQuestToSend = { id: questId, tickets: tickets };
         get(ref(db, 'players')).then((snap) => {
@@ -450,13 +447,20 @@ window.addEventListener('load', () => {
             }
             if (!found) list.innerHTML = '<p style="text-align:center;">Других игроков нет</p>';
             document.getElementById('select-player-modal').style.display = 'flex';
-            closeQuests(); // Закрываем окно заданий
+            closeQuests(); 
         });
     };
 
+    // Отправка задания конкретному игроку
     window.sendQuestToPlayer = (targetPlayer) => {
         if (!currentQuestToSend) return;
-        set(ref(db, `players/${targetPlayer}/quests`).push(), { questId: currentQuestToSend.id, tickets: currentQuestToSend.tickets, from: playerName });
+        // Создаем уникальный ключ в базе для этого игрока
+        const newQuestRef = ref(db, `players/${targetPlayer}/quests`).push();
+        set(newQuestRef, { 
+            questId: currentQuestToSend.id, 
+            tickets: currentQuestToSend.tickets, 
+            from: playerName 
+        });
         showNotification(`Задание отправлено игроку ${targetPlayer}!`, 'gift');
         closeSelectPlayer();
     };
