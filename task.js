@@ -2,26 +2,16 @@
 const { db, ref, set, update, get, onValue, push } = window.game;
 
 const questsList = [
-    { id: 'dishes', name: 'Помыть посуду', tickets: 1 }, 
-    { id: 'trash', name: 'Вынести мусор', tickets: 1 },
-    { id: 'package', name: 'Забрать посылку', tickets: 1 }, 
-    { id: 'zhkh_transfer', name: 'Передать показания ЖКХ', tickets: 1 },
-    { id: 'zhkh_pay', name: 'Оплатить ЖКХ', tickets: 1 }, 
-    { id: 'laundry_start', name: 'Запустить стирку', tickets: 2 },
-    { id: 'laundry_hang', name: 'Развесить белье', tickets: 1 }, 
-    { id: 'laundry_fold', name: 'Разобрать белье', tickets: 1 },
-    { id: 'bed', name: 'Поменять постельное белье', tickets: 2 }, 
-    { id: 'dust', name: 'Протереть пыль в 1 комнате', tickets: 3 },
-    { id: 'floors', name: 'Помыть полы в 1 комнате', tickets: 3 }, 
-    { id: 'groceries', name: 'Закупиться продуктами', tickets: 3 },
-    { id: 'lunch', name: 'Приготовить обед', tickets: 5 }, 
-    { id: 'dinner', name: 'Приготовить ужин', tickets: 5 },
-    { id: 'massage', name: 'Сделать массаж', tickets: 5 }, 
-    { id: 'flowers', name: 'Подарить цветы просто так', tickets: 10 },
-    { id: 'gift', name: 'Подарить подарок просто так', tickets: 10 }, 
-    { id: 'bake', name: 'Испечь пирожки/торт', tickets: 20 },
-    { id: 'table', name: 'Убрать со стола', tickets: 1 }, 
-    { id: 'water_flowers', name: 'Полить цветы', tickets: 2 }
+    { id: 'dishes', name: 'Помыть посуду', tickets: 1 }, { id: 'trash', name: 'Вынести мусор', tickets: 1 },
+    { id: 'package', name: 'Забрать посылку', tickets: 1 }, { id: 'zhkh_transfer', name: 'Передать показания ЖКХ', tickets: 1 },
+    { id: 'zhkh_pay', name: 'Оплатить ЖКХ', tickets: 1 }, { id: 'laundry_start', name: 'Запустить стирку', tickets: 2 },
+    { id: 'laundry_hang', name: 'Развесить белье', tickets: 1 }, { id: 'laundry_fold', name: 'Разобрать белье', tickets: 1 },
+    { id: 'bed', name: 'Поменять постельное белье', tickets: 2 }, { id: 'dust', name: 'Протереть пыль в 1 комнате', tickets: 3 },
+    { id: 'floors', name: 'Помыть полы в 1 комнате', tickets: 3 }, { id: 'groceries', name: 'Закупиться продуктами', tickets: 3 },
+    { id: 'lunch', name: 'Приготовить обед', tickets: 5 }, { id: 'dinner', name: 'Приготовить ужин', tickets: 5 },
+    { id: 'massage', name: 'Сделать массаж', tickets: 5 }, { id: 'flowers', name: 'Подарить цветы просто так', tickets: 10 },
+    { id: 'gift', name: 'Подарить подарок просто так', tickets: 10 }, { id: 'bake', name: 'Испечь пирожки/торт', tickets: 20 },
+    { id: 'table', name: 'Убрать со стола', tickets: 1 }, { id: 'water_flowers', name: 'Полить цветы', tickets: 2 }
 ].sort((a, b) => a.tickets - b.tickets);
 
 let currentQuestToSend = null;
@@ -57,8 +47,6 @@ window.openPlayerSelect = (questId, tickets) => {
 
 window.sendQuestToPlayer = (targetPlayer) => {
     if (!currentQuestToSend) return;
-    
-    // Отправляем задание в базу
     const newQuestRef = push(ref(db, `players/${targetPlayer}/quests`));
     set(newQuestRef, { 
         questId: currentQuestToSend.id, 
@@ -73,11 +61,7 @@ window.sendQuestToPlayer = (targetPlayer) => {
     });
 };
 
-window.closeSelectPlayer = () => { 
-    document.getElementById('select-player-modal').style.display = 'none'; 
-    currentQuestToSend = null; 
-};
-
+window.closeSelectPlayer = () => { document.getElementById('select-player-modal').style.display = 'none'; currentQuestToSend = null; };
 window.closeQuests = () => document.getElementById('quests-modal').style.display = 'none';
 
 export { questsList };
