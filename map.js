@@ -17,11 +17,13 @@ window.renderWorld = function(worldData, playersData, myName, myData) {
         cell.classList.add('cell');
         cell.id = `cell-${i}`;
         const cellData = worldData && worldData[i] ? worldData[i] : {type: 'empty'};
+        
         if (cellData.type === 'obstacle') cell.textContent = '🌲';
         else if (cellData.type === 'chest') cell.textContent = '🎁';
         else if (cellData.type === 'monster') cell.textContent = cellData.monsterType || '👹';
         else if (cellData.type === 'cashier') cell.textContent = '🎪';
         else cell.textContent = '·';
+        
         cell.addEventListener('click', () => window.attemptMove(i, cellData, myData));
         mapContainer.appendChild(cell);
     }
@@ -41,10 +43,11 @@ window.renderWorld = function(worldData, playersData, myName, myData) {
 };
 
 window.attemptMove = async function(targetIndex, cellData, myData) {
-    const { ref, set, update, db } = window.game;
+    const { ref, update, db } = window.game;
     if (!myData) return;
     const playerRef = ref(db, 'players/' + window.game.playerName);
     
+    // Если мы уже на этой клетке - взаимодействуем
     if (myData.position === targetIndex) {
         if (cellData.type === 'monster') window.openBattle(targetIndex, cellData.monsterType, myData);
         if (cellData.type === 'obstacle') window.cutObstacle(targetIndex, myData);
@@ -52,6 +55,8 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
         if (cellData.type === 'cashier') window.showCashier();
         return;
     }
+
+    // Если клетка далеко - автопуть
     const currentPos = myData.position;
     const row = Math.floor(currentPos / mapSize), col = currentPos % mapSize;
     const targetRow = Math.floor(targetIndex / mapSize), targetCol = targetIndex % mapSize;
@@ -59,11 +64,14 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
         if (confirm("Побежать к этой клетке?")) window.startPathfinding(targetIndex, myData);
         return;
     }
+
+    // Если клетка соседняя
     if (cellData.type === 'obstacle' && (!myData.inventory || myData.inventory.axe <= 0)) { 
-        window.showNotification("Нужен топор!", 'damage'); return; 
+        window.showNotification("Нужен топор! Купите в лавке.", 'damage'); return; 
     }
     if (cellData.type === 'monster') { window.openBattle(targetIndex, cellData.monsterType, myData); return; }
     
+    // Двигаемся
     update(playerRef, { position: targetIndex });
     if (cellData.type === 'chest') window.openChest(targetIndex, myData);
     if (cellData.type === 'cashier') window.showCashier();
@@ -99,13 +107,3 @@ window.startPathfinding = function(targetIndex, myData) {
         } else window.showNotification("Путь заблокирован!", 'damage');
     });
 };
-
-// Слушатель БД (глобальный)
-const { ref, onValue, db } = window.game;
-onValue(ref(db, 'world'), (worldSnap) => {
-    onValue(ref(db, 'players'), (playersSnap) => {
-        const playersData = playersSnap.val();
-        const myData = playersData ? playersData[window.game.playerName] : null;
-        window.renderWorld(worldSnap.val(), playersData, window.game.playerName, myData);
-    });
-});
