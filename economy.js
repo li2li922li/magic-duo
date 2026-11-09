@@ -1,6 +1,5 @@
 // economy.js
 const { db, ref, set, update, get, onValue, push } = window.game;
-
 const cashierItems = [
     { id: 'crystals_10', name: 'Обменять 1 билет на 10 кристаллов', price: 1, type: 'crystals', value: 10 },
     { id: 'delay', name: 'Отсрочка домашнего дела на 1 день', price: 1, type: 'real' },
