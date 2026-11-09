@@ -1,5 +1,5 @@
 // economy.js
-const { db, ref, set, update, get, onValue } = window.game;
+const { db, ref, set, update, get, onValue, push } = window.game;
 
 const cashierItems = [
     { id: 'crystals_10', name: 'Обменять 1 билет на 10 кристаллов', price: 1, type: 'crystals', value: 10 },
@@ -101,14 +101,13 @@ window.confirmCashierPurchase = (id, name, price, type, value) => {
                 update(ref(db, 'players/' + window.game.playerName), { tickets: myData.tickets - price });
                 window.showNotification(`Куплено: ${name}!`, 'player');
                 
-                // УВЕДОМЛЕНИЕ ПАРТНЕРУ
+                // ИСПРАВЛЕНО: Отправка уведомления партнеру
                 get(ref(db, 'players')).then((pSnap) => {
                     const players = pSnap.val(); let partner = null;
                     for (let key in players) if (key !== window.game.playerName) partner = key;
                     if (partner) {
-                        // Создаем уникальный ключ для уведомления
-                        const notifRef = ref(db, `players/${partner}/notifs`).push();
-                        set(notifRef, { text: `${window.game.playerName} купил: ${name}. Выполни это!` });
+                        const notifRef = push(ref(db, `players/${partner}/notifs`));
+                        set(notifRef, { text: `🎁 ${window.game.playerName} купил: ${name}. Выполни это!` });
                     }
                 });
             }
@@ -127,7 +126,7 @@ onValue(ref(db, `players/${window.game.playerName}/notifs`), (snap) => {
     if (notifs) { 
         for (let key in notifs) { 
             window.showNotification(notifs[key].text, 'player'); 
-            set(ref(db, `players/${window.game.playerName}/notifs/${key}`), null); 
+            // Уведомления не удаляем из базы, они будут висеть в карточке
         } 
     }
 });
