@@ -107,10 +107,11 @@ window.confirmCashierPurchase = (partner) => {
         
         if (type === 'crystals') {
             update(ref(db, 'players/' + window.game.playerName), { tickets: myData.tickets - price, crystals: (myData.crystals || 0) + value });
-            window.showNotification(`Обменяно! +${value} 💎`, 'crystal');
-        } else {
+              } else {
             // Отправляем уведомление партнеру как задание
-            const notifRef = push(ref(db, `players/${partner}/quests`));
+            const timestamp = Date.now();
+            const notifRef = ref(db, `players/${partner}/quests/${timestamp}`);
+            
             set(notifRef, { 
                 questId: id, 
                 tickets: 0, 
@@ -118,12 +119,13 @@ window.confirmCashierPurchase = (partner) => {
                 isCashier: true,
                 cost: price,
                 name: name
+            }).then(() => {
+                window.showNotification(`Покупка отправлена игроку ${partner}!`, 'gift');
+                window.closeSelectPlayer();
+                window.showCashier(); 
+            }).catch((error) => {
+                console.error("Ошибка отправки:", error);
+                alert("Ошибка: " + error.message);
             });
-            window.showNotification(`Покупка отправлена игроку ${partner}!`, 'gift');
         }
-        window.closeSelectPlayer();
-        window.showCashier(); 
-    });
-};
-
 window.closeCashier = () => document.getElementById('cashier-modal').style.display = 'none';
