@@ -47,7 +47,7 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
     if (!myData) return;
     const playerRef = ref(db, 'players/' + window.game.playerName);
     
-    // Если мы уже на этой клетке - взаимодействуем
+    // Если мы уже на этой клетке
     if (myData.position === targetIndex) {
         if (cellData.type === 'monster') window.openBattle(targetIndex, cellData.monsterType, myData);
         if (cellData.type === 'obstacle') window.cutObstacle(targetIndex, myData);
@@ -56,28 +56,42 @@ window.attemptMove = async function(targetIndex, cellData, myData) {
         return;
     }
 
-    // Если клетка далеко - автопуть
+    // Если клетка далеко
     const currentPos = myData.position;
     const row = Math.floor(currentPos / mapSize), col = currentPos % mapSize;
     const targetRow = Math.floor(targetIndex / mapSize), targetCol = targetIndex % mapSize;
+    
     if (Math.abs(row - targetRow) > 1 || Math.abs(col - targetCol) > 1) {
+        if (cellData.type === 'obstacle') {
+            // Если это завал, сначала бежим к нему, а потом ломаем
+            if (confirm("Побежать и разобрать завал?")) {
+                window.startPathfinding(targetIndex, myData, true);
+            }
+            return;
+        }
         if (confirm("Побежать к этой клетке?")) window.startPathfinding(targetIndex, myData);
         return;
     }
 
     // Если клетка соседняя
+    // ПРОВЕРКА: Если это дерево, а топора нет - не пускаем
     if (cellData.type === 'obstacle' && (!myData.inventory || myData.inventory.axe <= 0)) { 
         window.showNotification("Нужен топор! Купите в лавке.", 'damage'); return; 
     }
+    // ПРОВЕРКА: Если это монстр, сразу бой
     if (cellData.type === 'monster') { window.openBattle(targetIndex, cellData.monsterType, myData); return; }
     
-    // Двигаемся
-    update(playerRef, { position: targetIndex });
-    if (cellData.type === 'chest') window.openChest(targetIndex, myData);
-    if (cellData.type === 'cashier') window.showCashier();
+    // Двигаемся (только на пустые, сундуки, кассу или на завал, если он есть)
+    if (cellData.type === 'empty' || cellData.type === 'chest' || cellData.type === 'cashier' || cellData.type === 'obstacle') {
+        update(playerRef, { position: targetIndex });
+        if (cellData.type === 'chest') window.openChest(targetIndex, myData);
+        if (cellData.type === 'cashier') window.showCashier();
+        // Если наступили на завал, ломаем его сразу
+        if (cellData.type === 'obstacle') window.cutObstacle(targetIndex, myData);
+    }
 };
 
-window.startPathfinding = function(targetIndex, myData) {
+window.startPathfinding = function(targetIndex, myData, autoAction = false) {
     const { ref, get, update, db } = window.game;
     get(ref(db, 'world')).then((snap) => {
         const world = snap.val();
@@ -94,14 +108,25 @@ window.startPathfinding = function(targetIndex, myData) {
             for (let n of neighbors) {
                 if (n !== null && !visited.has(n)) {
                     const cellType = world[n] ? world[n].type : 'empty';
-                    if (cellType === 'empty') { visited.add(n); queue.push([...currentPath, n]); }
+                    // Для автопути к завалу разрешаем шагнуть на него в конце
+                    if (cellType === 'empty' || (autoAction && n === targetIndex)) { 
+                        visited.add(n); queue.push([...currentPath, n]); 
+                    }
                 }
             }
         }
         if (path) {
             let step = 0;
             const interval = setInterval(() => {
-                if (step >= path.length - 1) { clearInterval(interval); return; }
+                if (step >= path.length - 1) { 
+                    clearInterval(interval); 
+                    // Дошли до места
+                    if (autoAction) {
+                        const finalCell = world[targetIndex];
+                        if (finalCell && finalCell.type === 'obstacle') window.cutObstacle(targetIndex, myData);
+                    }
+                    return; 
+                }
                 step++; update(ref(db, 'players/' + window.game.playerName), { position: path[step] });
             }, 300);
         } else window.showNotification("Путь заблокирован!", 'damage');
