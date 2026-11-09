@@ -70,6 +70,7 @@
             width: 100%; padding: 15px; background: #000; border: 2px solid #ffcc00;
             border-radius: 10px; color: #ffcc00; font-size: 18px; text-align: center;
             font-family: inherit; margin-bottom: 20px; outline: none;
+            box-sizing: border-box;
         }
         .circus-btn {
             background: linear-gradient(to bottom, #8a2a2a, #4a0000);
@@ -120,26 +121,6 @@
     <div id="select-player-modal" class="modal-overlay"><div class="modal-content"><h2>Кому отправить?</h2><div id="player-select-list"></div><button onclick="closeSelectPlayer()" style="width: 100%; background: #6a2a2a;">Отмена</button></div></div>
     <div id="cashier-modal" class="modal-overlay"><div class="modal-content"><h2>🎪 Касса</h2><p style="text-align:center;">У вас есть: <b id="cashier-tickets">0</b> 🎫</p><div id="cashier-list"></div><button onclick="closeCashier()" style="width: 100%; margin-top: 15px; background: #6a2a2a;">Закрыть</button></div></div>
 
-    <script>
-        // Функция для отправки имени
-        window.submitName = function() {
-            const input = document.getElementById('player-name-input');
-            let name = input.value.trim();
-            if (!name) {
-                name = "Безымянный";
-            }
-            window.game.playerName = name;
-            document.getElementById('player-name').textContent = name;
-            document.getElementById('name-prompt').style.display = 'none';
-            
-            // Запускаем скрипт после ввода имени
-            const script = document.createElement('script');
-            script.type = 'module';
-            script.src = 'script.js';
-            document.body.appendChild(script);
-        };
-    </script>
-
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -160,10 +141,41 @@
         
         window.game = { db, ref, set, onValue, update, get, push, playerName: "" };
 
-        // Слушаем ввод имени (чтобы запустить игру)
-        window.addEventListener('load', () => {
-            // Игра запустится после того, как пользователь введет имя и нажмет кнопку
-        });
+        // Функция для отправки имени
+        window.submitName = function() {
+            const input = document.getElementById('player-name-input');
+            let name = input.value.trim();
+            if (!name) name = "Безымянный";
+            
+            window.game.playerName = name;
+            document.getElementById('player-name').textContent = name;
+            document.getElementById('name-prompt').style.display = 'none';
+            
+            // Создаем игрока в базе (если его нет) и запускаем скрипт
+            const { ref, get, set, db } = window.game;
+            const playerRef = ref(db, 'players/' + name);
+            
+            get(playerRef).then((snapshot) => {
+                if (!snapshot.exists()) {
+                    set(playerRef, {
+                        name: name, level: 1, xp: 0, hp: 10, maxHp: 10,
+                        tickets: 0, crystals: 100, position: 0, lastSeen: Date.now(),
+                        inventory: { axe: 10, arrows: 20, evasionPotion: 2, cookies: 3, milk: 2, chocolate: 1, waterSphere: 1, waterPower: 1 },
+                        invulnTurns: 0, avatar: '🥷🏻', questsProgress: {}
+                    }).then(() => {
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = 'script.js';
+                        document.body.appendChild(script);
+                    });
+                } else {
+                    const script = document.createElement('script');
+                    script.type = 'module';
+                    script.src = 'script.js';
+                    document.body.appendChild(script);
+                }
+            });
+        };
     </script>
 </body>
 </html>
