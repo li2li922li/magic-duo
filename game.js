@@ -129,7 +129,16 @@ onValue(ref(db, `players/${window.game.playerName}/gifts`), (snap) => {
     if (gifts) {
         for (let key in gifts) {
             const gift = gifts[key];
-            if (window.showNotification) window.showNotification(`Вам подарок от ${gift.from}: ${gift.item}!`, 'gift');
+            // Отправляем в карточку через notifs
+            const notifRef = ref(db, `players/${window.game.playerName}/notifs/${Date.now()}`);
+            set(notifRef, { text: `🎁 Вам подарок от ${gift.from}: ${gift.item}! Вы получили 10 💎` });
+            
+            // Добавляем 10 кристаллов партнеру
+            get(ref(db, 'players/' + window.game.playerName)).then((snap) => {
+                const pData = snap.val();
+                update(ref(db, 'players/' + window.game.playerName), { crystals: (pData.crystals || 0) + 10 });
+            });
+
             set(ref(db, `players/${window.game.playerName}/gifts/${key}`), null);
         }
     }
