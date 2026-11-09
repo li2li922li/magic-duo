@@ -151,4 +151,13 @@ onValue(ref(db, 'world'), (worldSnap) => {
         window.renderWorld(worldSnap.val(), playersData, window.game.playerName, myData);
     });
 });
-// ----------------------------------
+// В самом низу map.js
+const { ref, onValue, db } = window.game;
+
+onValue(ref(db, 'world'), (worldSnap) => {
+    onValue(ref(db, 'players'), (playersSnap) => {
+        const playersData = playersSnap.val();
+        const myData = playersData ? playersData[window.game.playerName] : null;
+        window.renderWorld(worldSnap.val(), playersData, window.game.playerName, myData);
+    });
+});
